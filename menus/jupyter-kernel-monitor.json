@@ -1,0 +1,18 @@
+{
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "Jupyter Kernel Monitor",
+          "submenu": [
+            {
+              "label": "Toggle Kernel Monitor",
+              "command": "jupyter-kernel-monitor:toggle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

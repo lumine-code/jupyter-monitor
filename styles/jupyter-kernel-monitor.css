@@ -1,0 +1,67 @@
+.jupyter-kernel-monitor {
+  .kernel-monitor-wrapper {
+    overflow-y: auto;
+    overflow-x: hidden;
+    cursor: default;
+    outline: none;
+
+    .kernel-monitor-row.selected > td {
+      background-color: rgb(from var(--text-color-info) r g b / 0.25);
+    }
+
+    .kernel-monitor-table {
+      width: 100%;
+
+      > thead {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background-color: var(--background-color-highlight);
+      }
+
+      border: unset;
+
+      th,
+      td {
+        padding: 0.3em 0.5em;
+        border: 1px solid var(--base-border-color);
+        border-top: 1px;
+
+        p {
+          margin-bottom: unset;
+        }
+      }
+
+      th:nth-child(1),
+      th:nth-child(2),
+      th:nth-child(3) {
+        white-space: nowrap;
+      }
+
+      .kernel-monitor-count,
+      .kernel-monitor-time {
+        text-align: right;
+      }
+
+      .kernel-monitor-managements {
+        text-align: center;
+        white-space: nowrap;
+
+        .icon::before {
+          padding-right: 5px;
+          padding-left: 5px;
+          width: auto;
+        }
+
+        .icon:hover {
+          color: var(--text-color-error);
+        }
+      }
+
+      .kernel-monitor-files {
+        text-align: left;
+        white-space: pre-wrap;
+      }
+    }
+  }
+}
