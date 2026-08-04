@@ -1,0 +1,14 @@
+{
+  "atom-workspace": {
+    "alt-h k": "jupyter-monitor:toggle"
+  },
+
+  "atom-workspace .kernel-monitor-wrapper": {
+    "up": "jupyter-monitor:up",
+    "down": "jupyter-monitor:down",
+    "enter": "jupyter-monitor:open",
+    "i": "jupyter-monitor:interrupt",
+    "r": "jupyter-monitor:restart",
+    "s": "jupyter-monitor:shutdown"
+  }
+}

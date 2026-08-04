@@ -8,7 +8,7 @@
           "submenu": [
             {
               "label": "Toggle Kernel Monitor",
-              "command": "jupyter-kernel-monitor:toggle"
+              "command": "jupyter-monitor:toggle"
             }
           ]
         }

@@ -1,4 +1,4 @@
-# jupyter-kernel-monitor
+# jupyter-monitor
 
 Watch every running Jupyter kernel in one table.
 
@@ -15,7 +15,7 @@ Kernels are started per file, so a session with several notebooks open has sever
 
 ## Installation
 
-To install `jupyter-kernel-monitor` search for _jupyter-kernel-monitor_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/jupyter-kernel-monitor`.
+To install `jupyter-monitor` search for _jupyter-monitor_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/jupyter-monitor`.
 
 It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyter-repl), which needs to be installed too.
 
@@ -23,16 +23,16 @@ It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyte
 
 Commands available in `atom-workspace`:
 
-- `jupyter-kernel-monitor:toggle`: open the kernel monitor, or return focus to the editor when it already has it.
+- `jupyter-monitor:toggle`: open the kernel monitor, or return focus to the editor when it already has it.
 
 Commands available in `.kernel-monitor-wrapper`:
 
-- `jupyter-kernel-monitor:up`: highlight the kernel above,
-- `jupyter-kernel-monitor:down`: highlight the kernel below,
-- `jupyter-kernel-monitor:open`: open every file the highlighted kernel serves,
-- `jupyter-kernel-monitor:interrupt`: interrupt the highlighted kernel,
-- `jupyter-kernel-monitor:restart`: restart the highlighted kernel,
-- `jupyter-kernel-monitor:shutdown`: shut the highlighted kernel down.
+- `jupyter-monitor:up`: highlight the kernel above,
+- `jupyter-monitor:down`: highlight the kernel below,
+- `jupyter-monitor:open`: open every file the highlighted kernel serves,
+- `jupyter-monitor:interrupt`: interrupt the highlighted kernel,
+- `jupyter-monitor:restart`: restart the highlighted kernel,
+- `jupyter-monitor:shutdown`: shut the highlighted kernel down.
 
 ## Usage
 
@@ -43,7 +43,7 @@ The highlight follows the kernel of the file you are editing, so opening the mon
 Paste this into your `styles.less` to make the table more compact:
 
 ```less
-.jupyter-kernel-monitor {
+.jupyter-monitor {
   .kernel-monitor-table th,
   .kernel-monitor-table td {
     padding: 0.1em 0.3em;

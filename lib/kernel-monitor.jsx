@@ -45,7 +45,7 @@ const openUnsavedEditor = (filePath) => {
 
 const openEditor = (filePath) => {
   atom.workspace.open(filePath, { searchAllPanes: true }).catch((error) => {
-    atom.notifications.addError("jupyter-kernel-monitor", { description: error });
+    atom.notifications.addError("jupyter-monitor", { description: error });
   });
 };
 
@@ -63,12 +63,12 @@ class KernelMonitor {
 
     this.disposables = new CompositeDisposable(
       atom.commands.add(this.element, {
-        "jupyter-kernel-monitor:up": () => this.move(-1),
-        "jupyter-kernel-monitor:down": () => this.move(1),
-        "jupyter-kernel-monitor:open": () => this.openFiles(),
-        "jupyter-kernel-monitor:interrupt": () => this.act(interrupt),
-        "jupyter-kernel-monitor:restart": () => this.act(restart),
-        "jupyter-kernel-monitor:shutdown": () => this.act(shutdown),
+        "jupyter-monitor:up": () => this.move(-1),
+        "jupyter-monitor:down": () => this.move(1),
+        "jupyter-monitor:open": () => this.openFiles(),
+        "jupyter-monitor:interrupt": () => this.act(interrupt),
+        "jupyter-monitor:restart": () => this.act(restart),
+        "jupyter-monitor:shutdown": () => this.act(shutdown),
       }),
       // The highlight follows the kernel of the active centre pane item, so a
       // manual arrow-key selection is cleared when that item changes.
