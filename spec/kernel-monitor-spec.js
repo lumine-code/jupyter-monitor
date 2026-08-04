@@ -191,3 +191,27 @@ describe("kernel monitor", () => {
     expect(python.listenerCount()).toBe(0);
   });
 });
+
+describe("kernel monitor pane", () => {
+  const KernelMonitorPane = require("../lib/kernel-monitor-pane");
+
+  // Losing the kernel service destroys the item directly rather than through
+  // `pane.destroyItem`, and a pane only drops an item that tells it so.
+  it("leaves no tab behind when destroyed directly", () => {
+    const pane = new KernelMonitorPane(fakeProvider([]));
+    const workspacePane = atom.workspace.getCenter().getActivePane();
+    workspacePane.addItem(pane);
+
+    expect(workspacePane.getItems()).toContain(pane);
+
+    pane.destroy();
+
+    expect(workspacePane.getItems()).not.toContain(pane);
+  });
+
+  it("survives being destroyed twice", () => {
+    const pane = new KernelMonitorPane(fakeProvider([]));
+    pane.destroy();
+    expect(() => pane.destroy()).not.toThrow();
+  });
+});
