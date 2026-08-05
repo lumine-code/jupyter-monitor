@@ -4,9 +4,9 @@
   },
 
   "atom-workspace .monitor-wrapper": {
-    "up": "jupyter-monitor:up",
-    "down": "jupyter-monitor:down",
-    "enter": "jupyter-monitor:open",
+    "up": "core:move-up",
+    "down": "core:move-down",
+    "enter": "core:confirm",
     "i": "jupyter-monitor:interrupt",
     "r": "jupyter-monitor:restart",
     "s": "jupyter-monitor:shutdown"

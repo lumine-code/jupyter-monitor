@@ -5,8 +5,24 @@
     cursor: default;
     outline: none;
 
-    .monitor-row.selected > td {
-      background-color: rgb(from var(--text-color-info) r g b / 0.25);
+    /* Row states, the way the linter panel draws them: hover gives faint
+       feedback, `current` (the active file's kernel) is always tinted, and
+       `focused` is the keyboard cursor — an outline shown only while the
+       panel has focus, further below. */
+    .monitor-row {
+      transition: background-color 0.15s ease-out;
+
+      &:hover > td {
+        background-color: rgb(from var(--text-color) r g b / 0.06);
+      }
+
+      &.current > td {
+        background-color: rgb(from var(--text-color-info) r g b / 0.25);
+      }
+
+      &.current:hover > td {
+        background-color: rgb(from var(--text-color-info) r g b / 0.3);
+      }
     }
 
     .monitor-table {
@@ -62,6 +78,13 @@
         text-align: left;
         white-space: pre-wrap;
       }
+    }
+  }
+
+  .monitor-wrapper:focus-within {
+    .monitor-row.focused {
+      outline: 1px dotted var(--text-color-highlight);
+      outline-offset: -2px;
     }
   }
 }

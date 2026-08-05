@@ -108,49 +108,67 @@ describe("kernel monitor", () => {
     expect(component.element.querySelector(".monitor-header")).toBeTruthy();
   });
 
-  it("highlights the provider's active kernel until one is picked by hand", () => {
-    const python = fakeKernel("Python 3");
-    const r = fakeKernel("R");
-    const provider = fakeProvider([python, r]);
-    provider.active = r;
-    component = new Monitor({ provider });
-    flush(component);
-
-    expect(rows()[1].classList.contains("selected")).toBe(true);
-
-    component.move(-1);
-    flush(component);
-
-    expect(rows()[0].classList.contains("selected")).toBe(true);
-  });
-
-  it("follows the observed active kernel across tab switches", () => {
+  it("tints the observed active kernel's row and follows tab switches", () => {
     const python = fakeKernel("Python 3");
     const r = fakeKernel("R");
     const provider = fakeProvider([python, r]);
     component = new Monitor({ provider });
     flush(component);
 
-    expect(rows()[0].classList.contains("selected")).toBe(true);
+    expect(rows()[0].classList.contains("current")).toBe(true);
 
     // What jupyter-repl announces after the user switches to the R file.
     provider.setActive(r);
     flush(component);
 
-    expect(rows()[1].classList.contains("selected")).toBe(true);
+    expect(rows()[0].classList.contains("current")).toBe(false);
+    expect(rows()[1].classList.contains("current")).toBe(true);
+
+    // A tab no kernel serves tints nothing.
+    provider.setActive(null);
+    flush(component);
+    expect(component.element.querySelectorAll(".monitor-row.current").length).toBe(0);
   });
 
-  it("runs an action against the highlighted kernel", () => {
+  it("moves a keyboard cursor independently of the current row", () => {
     const python = fakeKernel("Python 3");
     const r = fakeKernel("R");
-    component = new Monitor({ provider: fakeProvider([python, r]) });
+    const provider = fakeProvider([python, r]);
+    provider.active = python;
+    component = new Monitor({ provider });
     flush(component);
 
     component.move(1);
-    component.act((kernel) => kernel.interrupt());
+    flush(component);
 
-    expect(r.interrupted).toBe(true);
-    expect(python.interrupted).toBeUndefined();
+    // The tint stays on the active file's kernel; the cursor is its own mark.
+    expect(rows()[0].classList.contains("current")).toBe(true);
+    expect(rows()[1].classList.contains("focused")).toBe(true);
+
+    // With no cursor and no current row, the first press enters the list.
+    provider.setActive(null);
+    component.focusedKey = null;
+    component.move(1);
+    flush(component);
+    expect(rows()[0].classList.contains("focused")).toBe(true);
+  });
+
+  it("runs an action against the cursor, or the current row without one", () => {
+    const python = fakeKernel("Python 3");
+    const r = fakeKernel("R");
+    const provider = fakeProvider([python, r]);
+    provider.active = python;
+    component = new Monitor({ provider });
+    flush(component);
+
+    // No cursor: the current row is the target.
+    component.act((kernel) => (kernel.acted = "current"));
+    expect(python.acted).toBe("current");
+
+    // Cursor placed: it wins.
+    component.move(1);
+    component.act((kernel) => (kernel.acted = "focused"));
+    expect(r.acted).toBe("focused");
   });
 
   it("redraws when a kernel reports a status change", () => {

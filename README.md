@@ -27,16 +27,16 @@ Commands available in `atom-workspace`:
 
 Commands available in `.monitor-wrapper`:
 
-- `jupyter-monitor:up`: highlight the kernel above,
-- `jupyter-monitor:down`: highlight the kernel below,
-- `jupyter-monitor:open`: open every file the highlighted kernel serves,
-- `jupyter-monitor:interrupt`: interrupt the highlighted kernel,
-- `jupyter-monitor:restart`: restart the highlighted kernel,
-- `jupyter-monitor:shutdown`: shut the highlighted kernel down.
+- `jupyter-monitor:open`: open every file the targeted kernel serves,
+- `jupyter-monitor:interrupt`: interrupt the targeted kernel,
+- `jupyter-monitor:restart`: restart the targeted kernel,
+- `jupyter-monitor:shutdown`: shut the targeted kernel down.
+
+The panel also answers the core commands: `core:move-up` / `core:move-down` move the keyboard cursor, `core:confirm` opens the cursor's files, `core:cancel` clears the cursor.
 
 ## Usage
 
-The highlight follows the kernel of the file you are editing, so opening the monitor already points at the one you were working with. Arrow keys move it, and it stays where you put it until you switch files.
+The tinted row is the kernel of the file you are editing, and it follows along as you switch tabs; a tab no kernel serves tints nothing. With the panel focused, the arrow keys move a separate dotted cursor for keyboard actions, which target the cursor when it is placed and the tinted row otherwise.
 
 ## Customization
 

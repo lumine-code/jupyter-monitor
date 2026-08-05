@@ -55,7 +55,12 @@ const openEditor = (filePath) => {
 class Monitor {
   constructor({ provider }) {
     this.provider = provider;
-    this.selectedKey = null;
+    // Two independent row states, the way the linter panel draws its list:
+    // `current` marks the kernel of the file active in the workspace centre
+    // and is always tinted; `focused` is the keyboard cursor, an outline the
+    // stylesheet only shows while the panel has focus.
+    this.focusedKey = null;
+    this.activeKernel = null;
     // One status subscription per kernel, rebuilt whenever the set changes.
     this.kernelSubscriptions = new CompositeDisposable();
 
@@ -63,18 +68,27 @@ class Monitor {
 
     this.disposables = new CompositeDisposable(
       atom.commands.add(this.element, {
-        "jupyter-monitor:up": () => this.move(-1),
-        "jupyter-monitor:down": () => this.move(1),
+        "core:move-up": (event) => {
+          event.stopPropagation();
+          this.move(-1);
+        },
+        "core:move-down": (event) => {
+          event.stopPropagation();
+          this.move(1);
+        },
+        "core:confirm": (event) => {
+          event.stopPropagation();
+          this.openFiles();
+        },
+        "core:cancel": (event) => {
+          event.stopPropagation();
+          this.focusedKey = null;
+          etch.update(this);
+        },
         "jupyter-monitor:open": () => this.openFiles(),
         "jupyter-monitor:interrupt": () => this.act(interrupt),
         "jupyter-monitor:restart": () => this.act(restart),
         "jupyter-monitor:shutdown": () => this.act(shutdown),
-      }),
-      // The highlight follows the kernel of the active centre pane item, so a
-      // manual arrow-key selection is cleared when that item changes.
-      atom.workspace.getCenter().onDidChangeActivePaneItem(() => {
-        this.selectedKey = null;
-        etch.update(this);
       }),
       this.provider.observeActiveKernel((kernel) => {
         this.activeKernel = kernel;
@@ -103,24 +117,28 @@ class Monitor {
     return this.provider.getRunningKernels();
   }
 
-  // The highlighted kernel: a manual selection if one is set, otherwise the
-  // kernel of the file active in the workspace centre — as observed off the
-  // provider, so every change arrives after jupyter-repl has processed it —
-  // otherwise the first, so a keyboard action always has a target.
-  selectedKernel(kernels = this.kernels()) {
-    if (!kernels.length) {
-      return null;
-    }
-    if (this.selectedKey) {
-      const manual = kernels.find((kernel) => getKernelKey(kernel) === this.selectedKey);
-      if (manual) {
-        return manual;
-      }
-    }
+  // The kernel of the file active in the workspace centre — as observed off
+  // the provider, so every change arrives after jupyter-repl has processed
+  // it. No kernel for the active file means no current row.
+  currentKernel(kernels = this.kernels()) {
     if (this.activeKernel && kernels.includes(this.activeKernel)) {
       return this.activeKernel;
     }
-    return kernels[0];
+    return null;
+  }
+
+  // The keyboard cursor's kernel, when the cursor is on a live row.
+  focusedKernel(kernels = this.kernels()) {
+    if (!this.focusedKey) {
+      return null;
+    }
+    return kernels.find((kernel) => getKernelKey(kernel) === this.focusedKey) || null;
+  }
+
+  // What a keyboard action operates on: the cursor when it is placed,
+  // otherwise the current row.
+  targetKernel(kernels = this.kernels()) {
+    return this.focusedKernel(kernels) || this.currentKernel(kernels);
   }
 
   move(delta) {
@@ -128,22 +146,28 @@ class Monitor {
     if (!kernels.length) {
       return;
     }
-    const current = this.selectedKernel(kernels);
-    let index = current ? kernels.indexOf(current) : 0;
-    index = Math.min(kernels.length - 1, Math.max(0, index + delta));
-    this.selectedKey = getKernelKey(kernels[index]);
+    const from = this.focusedKernel(kernels) || this.currentKernel(kernels);
+    let index;
+    if (from) {
+      index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(from) + delta));
+    } else {
+      // No cursor yet: the first press enters the list from the end it came
+      // from.
+      index = delta > 0 ? 0 : kernels.length - 1;
+    }
+    this.focusedKey = getKernelKey(kernels[index]);
     etch.update(this);
   }
 
   act(fn) {
-    const kernel = this.selectedKernel();
+    const kernel = this.targetKernel();
     if (kernel) {
       fn(kernel);
     }
   }
 
   openFiles() {
-    const kernel = this.selectedKernel();
+    const kernel = this.targetKernel();
     if (!kernel) {
       return;
     }
@@ -157,7 +181,7 @@ class Monitor {
   }
 
   select(key) {
-    this.selectedKey = key;
+    this.focusedKey = key;
     etch.update(this);
   }
 
@@ -178,17 +202,20 @@ class Monitor {
     });
   }
 
-  renderRow(kernel, selectedKey) {
+  renderRow(kernel, currentKey, focusedKey) {
     const key = getKernelKey(kernel);
     const isRemote = Boolean(kernel.gatewayName);
     const files = this.provider.getFilesForKernel(kernel);
+    const classes = ["monitor-row"];
+    if (key === currentKey) {
+      classes.push("current");
+    }
+    if (key === focusedKey) {
+      classes.push("focused");
+    }
 
     return (
-      <tr
-        key={key}
-        className={key === selectedKey ? "monitor-row selected" : "monitor-row"}
-        onClick={() => this.select(key)}
-      >
+      <tr key={key} className={classes.join(" ")} onClick={() => this.select(key)}>
         <td className="monitor-gateway">{kernel.gatewayName || "Local"}</td>
         <td className="monitor-kernel">
           <a onClick={() => showKernelSpec(kernel)} title="Show kernel spec">
@@ -217,8 +244,8 @@ class Monitor {
 
   render() {
     const kernels = this.kernels();
-    const selected = this.selectedKernel(kernels);
-    const selectedKey = selected ? getKernelKey(selected) : null;
+    const current = this.currentKernel(kernels);
+    const currentKey = current ? getKernelKey(current) : null;
 
     return (
       <div className="monitor-wrapper" tabIndex={-1}>
@@ -234,7 +261,7 @@ class Monitor {
               <th>Files</th>
             </tr>
           </thead>
-          <tbody>{kernels.map((kernel) => this.renderRow(kernel, selectedKey))}</tbody>
+          <tbody>{kernels.map((kernel) => this.renderRow(kernel, currentKey, this.focusedKey))}</tbody>
         </table>
       </div>
     );
