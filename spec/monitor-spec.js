@@ -202,6 +202,32 @@ describe("kernel monitor", () => {
     expect(opened.length).toBe(1);
   });
 
+  it("drops the cursor on confirm and on leaving the panel", () => {
+    const python = fakeKernel("Python 3");
+    const r = fakeKernel("R");
+    const provider = fakeProvider([python, r]);
+    provider.active = python;
+    component = new Monitor({ provider });
+    flush(component);
+    spyOn(atom.workspace, "open").and.returnValue(Promise.resolve());
+
+    component.move(1);
+    flush(component);
+    expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(1);
+
+    // Enter: the journey ends, the cursor goes.
+    component.openFiles();
+    flush(component);
+    expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(0);
+
+    // And leaving the panel clears it too.
+    component.move(1);
+    flush(component);
+    component.element.dispatchEvent(new FocusEvent("focusout", { relatedTarget: null }));
+    flush(component);
+    expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(0);
+  });
+
   it("redraws when a kernel reports a status change", () => {
     const python = fakeKernel("Python 3");
     component = new Monitor({ provider: fakeProvider([python]) });

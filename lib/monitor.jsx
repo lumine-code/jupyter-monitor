@@ -1,4 +1,10 @@
 const etch = require("@lumine-code/etch");
+
+// An addEventListener paired with its removal, in the shape CompositeDisposable takes.
+function addDomListener(element, event, handler) {
+  element.addEventListener(event, handler);
+  return { dispose: () => element.removeEventListener(event, handler) };
+}
 const { CompositeDisposable } = require("atom");
 const { isUnsavedFilePath, tildify } = require("./utils");
 
@@ -90,6 +96,14 @@ class Monitor {
         "jupyter-monitor:restart": () => this.act(restart),
         "jupyter-monitor:shutdown": () => this.act(shutdown),
       }),
+      // Leaving the panel ends the keyboard journey too: the cursor does not
+      // lie in wait to reappear on the next visit.
+      addDomListener(this.element, "focusout", (event) => {
+        if (!this.element.contains(event.relatedTarget)) {
+          this.focusedKey = null;
+          etch.update(this);
+        }
+      }),
       this.provider.observeActiveKernel((kernel) => {
         this.activeKernel = kernel;
         etch.update(this);
@@ -169,6 +183,9 @@ class Monitor {
 
   openFiles() {
     this.openFilesFor(this.targetKernel());
+    // Confirming is the end of a keyboard journey; the cursor goes with it.
+    this.focusedKey = null;
+    etch.update(this);
   }
 
   openFilesFor(kernel) {
