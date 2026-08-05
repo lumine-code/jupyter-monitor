@@ -138,17 +138,22 @@ describe("kernel monitor", () => {
     component = new Monitor({ provider });
     flush(component);
 
+    // The first press materialises the cursor on the current row; the next
+    // one moves it. The tint stays put: the cursor is its own mark.
     component.move(1);
     flush(component);
-
-    // The tint stays on the active file's kernel; the cursor is its own mark.
     expect(rows()[0].classList.contains("current")).toBe(true);
+    expect(rows()[0].classList.contains("focused")).toBe(true);
+
+    component.move(1);
+    flush(component);
     expect(rows()[1].classList.contains("focused")).toBe(true);
 
-    // With no cursor and no current row, the first press enters the list.
+    // With no cursor and no current row, it materialises on the first row —
+    // in either direction.
     provider.setActive(null);
     component.focusedKey = null;
-    component.move(1);
+    component.move(-1);
     flush(component);
     expect(rows()[0].classList.contains("focused")).toBe(true);
   });
@@ -165,7 +170,8 @@ describe("kernel monitor", () => {
     component.act((kernel) => (kernel.acted = "current"));
     expect(python.acted).toBe("current");
 
-    // Cursor placed: it wins.
+    // Cursor placed and moved off the current row: it wins.
+    component.move(1);
     component.move(1);
     component.act((kernel) => (kernel.acted = "focused"));
     expect(r.acted).toBe("focused");

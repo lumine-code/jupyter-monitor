@@ -146,14 +146,15 @@ class Monitor {
     if (!kernels.length) {
       return;
     }
-    const from = this.focusedKernel(kernels) || this.currentKernel(kernels);
+    const focused = this.focusedKernel(kernels);
     let index;
-    if (from) {
-      index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(from) + delta));
+    if (focused) {
+      index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(focused) + delta));
     } else {
-      // No cursor yet: the first press enters the list from the end it came
-      // from.
-      index = delta > 0 ? 0 : kernels.length - 1;
+      // The first navigation does not move: it materialises the cursor, on
+      // the current row when there is one, on the first row otherwise.
+      const current = this.currentKernel(kernels);
+      index = current ? kernels.indexOf(current) : 0;
     }
     this.focusedKey = getKernelKey(kernels[index]);
     etch.update(this);
