@@ -157,7 +157,6 @@ describe("kernel monitor", () => {
     component.move(-1);
     flush(component);
     expect(rows()[1].classList.contains("focused")).toBe(true);
-
   });
 
   it("steps off a mid-list current row in both directions", () => {
@@ -216,15 +215,15 @@ describe("kernel monitor", () => {
     });
 
     // A plain cell click jumps to the file.
-    rows()[0].querySelector(".monitor-status").dispatchEvent(
-      new MouseEvent("click", { bubbles: true }),
-    );
+    rows()[0]
+      .querySelector(".monitor-status")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(opened.length).toBe(1);
 
     // A click on the kernel-name link keeps its own meaning.
-    rows()[0].querySelector(".monitor-kernel a").dispatchEvent(
-      new MouseEvent("click", { bubbles: true }),
-    );
+    rows()[0]
+      .querySelector(".monitor-kernel a")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(opened.length).toBe(1);
   });
 
@@ -301,9 +300,7 @@ describe("kernel monitor", () => {
     component = new Monitor({ provider: fakeProvider([python], files) });
     flush(component);
 
-    expect(rows()[0].querySelector(".monitor-files").textContent).toContain(
-      "Unsaved Editor 7",
-    );
+    expect(rows()[0].querySelector(".monitor-files").textContent).toContain("Unsaved Editor 7");
   });
 
   it("offers a rename only for a remote session", () => {

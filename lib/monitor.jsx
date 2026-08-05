@@ -174,7 +174,6 @@ class Monitor {
     etch.update(this);
   }
 
-
   // Enter is the end of a keyboard journey: it needs a cursor, opens that
   // kernel's files, and takes the cursor with it.
   confirmFocused() {
@@ -309,7 +308,9 @@ class Monitor {
               <th>Files</th>
             </tr>
           </thead>
-          <tbody>{kernels.map((kernel) => this.renderRow(kernel, currentKey, this.focusedKey))}</tbody>
+          <tbody>
+            {kernels.map((kernel) => this.renderRow(kernel, currentKey, this.focusedKey))}
+          </tbody>
         </table>
       </div>
     );
