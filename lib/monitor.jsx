@@ -172,17 +172,6 @@ class Monitor {
     etch.update(this);
   }
 
-  // Opening the panel by its toggle places the cursor on the current row, or
-  // the first when no kernel serves the active file.
-  initFocus() {
-    const kernels = this.kernels();
-    if (!kernels.length) {
-      return;
-    }
-    const current = this.currentKernel(kernels);
-    this.focusedKey = getKernelKey(current || kernels[0]);
-    etch.update(this);
-  }
 
   // Enter is the end of a keyboard journey: it needs a cursor, opens that
   // kernel's files, and takes the cursor with it.

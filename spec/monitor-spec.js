@@ -155,11 +155,6 @@ describe("kernel monitor", () => {
     flush(component);
     expect(rows()[1].classList.contains("focused")).toBe(true);
 
-    // The toggle seeds the cursor on the current row instead.
-    component.focusedKey = null;
-    component.initFocus();
-    flush(component);
-    expect(rows()[0].classList.contains("focused")).toBe(true);
   });
 
   it("runs an action against the cursor, or the current row without one", () => {
