@@ -138,8 +138,8 @@ describe("kernel monitor", () => {
     component = new Monitor({ provider });
     flush(component);
 
-    // The first press materialises the cursor on the current row; the next
-    // one moves it. The tint stays put: the cursor is its own mark.
+    // Down enters at the first row, like the linter panel; the tint stays
+    // put: the cursor is its own mark.
     component.move(1);
     flush(component);
     expect(rows()[0].classList.contains("current")).toBe(true);
@@ -149,11 +149,15 @@ describe("kernel monitor", () => {
     flush(component);
     expect(rows()[1].classList.contains("focused")).toBe(true);
 
-    // With no cursor and no current row, it materialises on the first row —
-    // in either direction.
-    provider.setActive(null);
+    // Up with no cursor enters at the last row.
     component.focusedKey = null;
     component.move(-1);
+    flush(component);
+    expect(rows()[1].classList.contains("focused")).toBe(true);
+
+    // The toggle seeds the cursor on the current row instead.
+    component.focusedKey = null;
+    component.initFocus();
     flush(component);
     expect(rows()[0].classList.contains("focused")).toBe(true);
   });
@@ -205,7 +209,13 @@ describe("kernel monitor", () => {
   it("drops the cursor on confirm and on leaving the panel", () => {
     const python = fakeKernel("Python 3");
     const r = fakeKernel("R");
-    const provider = fakeProvider([python, r]);
+    const provider = fakeProvider(
+      [python, r],
+      new Map([
+        [python, ["/tmp/analysis.py"]],
+        [r, ["/tmp/report.R"]],
+      ]),
+    );
     provider.active = python;
     component = new Monitor({ provider });
     flush(component);
@@ -215,10 +225,16 @@ describe("kernel monitor", () => {
     flush(component);
     expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(1);
 
-    // Enter: the journey ends, the cursor goes.
-    component.openFiles();
+    // Enter: the journey ends, the cursor goes with it.
+    component.confirmFocused();
     flush(component);
     expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(0);
+    expect(atom.workspace.open).toHaveBeenCalled();
+
+    // Enter with no cursor does nothing.
+    atom.workspace.open.calls.reset();
+    component.confirmFocused();
+    expect(atom.workspace.open).not.toHaveBeenCalled();
 
     // And leaving the panel clears it too.
     component.move(1);

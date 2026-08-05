@@ -84,12 +84,11 @@ class Monitor {
         },
         "core:confirm": (event) => {
           event.stopPropagation();
-          this.openFiles();
+          this.confirmFocused();
         },
         "core:cancel": (event) => {
           event.stopPropagation();
-          this.focusedKey = null;
-          etch.update(this);
+          this.cancelFocus();
         },
         "jupyter-monitor:open": () => this.openFiles(),
         "jupyter-monitor:interrupt": () => this.act(interrupt),
@@ -165,13 +164,43 @@ class Monitor {
     if (focused) {
       index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(focused) + delta));
     } else {
-      // The first navigation does not move: it materialises the cursor, on
-      // the current row when there is one, on the first row otherwise.
-      const current = this.currentKernel(kernels);
-      index = current ? kernels.indexOf(current) : 0;
+      // No cursor yet: enter the list from the end the key came from, the
+      // way the linter panel does.
+      index = delta > 0 ? 0 : kernels.length - 1;
     }
     this.focusedKey = getKernelKey(kernels[index]);
     etch.update(this);
+  }
+
+  // Opening the panel by its toggle places the cursor on the current row, or
+  // the first when no kernel serves the active file.
+  initFocus() {
+    const kernels = this.kernels();
+    if (!kernels.length) {
+      return;
+    }
+    const current = this.currentKernel(kernels);
+    this.focusedKey = getKernelKey(current || kernels[0]);
+    etch.update(this);
+  }
+
+  // Enter is the end of a keyboard journey: it needs a cursor, opens that
+  // kernel's files, and takes the cursor with it.
+  confirmFocused() {
+    const kernel = this.focusedKernel();
+    if (!kernel) {
+      return;
+    }
+    this.focusedKey = null;
+    etch.update(this);
+    this.openFilesFor(kernel);
+  }
+
+  // Escape drops the cursor and hands focus back to the editor.
+  cancelFocus() {
+    this.focusedKey = null;
+    etch.update(this);
+    atom.workspace.getActiveTextEditor()?.element?.focus();
   }
 
   act(fn) {
@@ -183,9 +212,6 @@ class Monitor {
 
   openFiles() {
     this.openFilesFor(this.targetKernel());
-    // Confirming is the end of a keyboard journey; the cursor goes with it.
-    this.focusedKey = null;
-    etch.update(this);
   }
 
   openFilesFor(kernel) {
