@@ -36,7 +36,7 @@ The panel also answers the core commands: `core:move-up` / `core:move-down` move
 
 ## Usage
 
-The tinted row is the kernel of the file you are editing, and it follows along as you switch tabs; a tab no kernel serves tints nothing. With the panel focused, the arrow keys move a separate dotted cursor for keyboard actions, which target the cursor when it is placed and the tinted row otherwise.
+The tinted row is the kernel of the file you are editing, and it follows along as you switch tabs; a tab no kernel serves tints nothing. With the panel focused, the arrow keys move a separate dotted cursor — placed only by the keyboard, never by the mouse — and keyboard actions target it when it is placed, the tinted row otherwise. Clicking a row opens the files its kernel serves.
 
 ## Customization
 

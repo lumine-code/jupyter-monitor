@@ -186,17 +186,12 @@ class Monitor {
   // The row itself is a hyperlink to the kernel's files, the way a linter row
   // jumps to its message. Anything that is a link of its own — the file
   // links, the action icons, the kernel-spec name — keeps its own click.
-  handleRowClick(event, kernel, key) {
+  // The keyboard cursor stays where it is: only keyboard navigation places it.
+  handleRowClick(event, kernel) {
     if (event.target.closest("a")) {
       return;
     }
-    this.select(key);
     this.openFilesFor(kernel);
-  }
-
-  select(key) {
-    this.focusedKey = key;
-    etch.update(this);
   }
 
   renderFileLinks(files) {
@@ -232,7 +227,7 @@ class Monitor {
       <tr
         key={key}
         className={classes.join(" ")}
-        onClick={(event) => this.handleRowClick(event, kernel, key)}
+        onClick={(event) => this.handleRowClick(event, kernel)}
       >
         <td className="monitor-gateway">{kernel.gatewayName || "Local"}</td>
         <td className="monitor-kernel">
