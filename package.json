@@ -24,6 +24,13 @@
     "You can see every running kernel, and interrupt or restart any of them, with {{ 'jupyter-monitor:toggle' | keystroke }}"
   ],
   "main": "./lib/main",
+  "files": [
+    "keymaps",
+    "lib",
+    "menus",
+    "spec",
+    "styles"
+  ],
   "scripts": {
     "test": "lumine --test spec",
     "lint": "eslint . --max-warnings 0",
