@@ -1,3 +1,4 @@
+/** @jsx etch.dom */
 const etch = require("@lumine-code/etch");
 
 // An addEventListener paired with its removal, in the shape CompositeDisposable takes.
