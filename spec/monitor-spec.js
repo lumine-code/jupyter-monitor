@@ -160,6 +160,30 @@ describe("kernel monitor", () => {
 
   });
 
+  it("steps off a mid-list current row in both directions", () => {
+    const a = fakeKernel("A");
+    const b = fakeKernel("B");
+    const c = fakeKernel("C");
+    const provider = fakeProvider([a, b, c]);
+    provider.active = c;
+    component = new Monitor({ provider });
+    flush(component);
+    provider.setActive(b);
+    flush(component);
+    expect(rows()[1].classList.contains("current")).toBe(true);
+
+    // Current is the middle row: up reaches the row above it.
+    component.move(-1);
+    flush(component);
+    expect(rows()[0].classList.contains("focused")).toBe(true);
+
+    // And afresh, down reaches the row below it.
+    component.focusedKey = null;
+    component.move(1);
+    flush(component);
+    expect(rows()[2].classList.contains("focused")).toBe(true);
+  });
+
   it("runs an action against the cursor, or the current row without one", () => {
     const python = fakeKernel("Python 3");
     const r = fakeKernel("R");
