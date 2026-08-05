@@ -1,6 +1,6 @@
 {
   "atom-workspace": {
-    "alt-h k": "jupyter-monitor:toggle"
+    "alt-j m": "jupyter-monitor:toggle"
   },
 
   "atom-workspace .monitor-wrapper": {
