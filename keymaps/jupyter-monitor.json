@@ -3,7 +3,7 @@
     "alt-h k": "jupyter-monitor:toggle"
   },
 
-  "atom-workspace .kernel-monitor-wrapper": {
+  "atom-workspace .monitor-wrapper": {
     "up": "jupyter-monitor:up",
     "down": "jupyter-monitor:down",
     "enter": "jupyter-monitor:open",

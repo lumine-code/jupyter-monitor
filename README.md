@@ -25,7 +25,7 @@ Commands available in `atom-workspace`:
 
 - `jupyter-monitor:toggle`: open the kernel monitor, or return focus to the editor when it already has it.
 
-Commands available in `.kernel-monitor-wrapper`:
+Commands available in `.monitor-wrapper`:
 
 - `jupyter-monitor:up`: highlight the kernel above,
 - `jupyter-monitor:down`: highlight the kernel below,
@@ -44,8 +44,8 @@ Paste this into your `styles.less` to make the table more compact:
 
 ```less
 .jupyter-monitor {
-  .kernel-monitor-table th,
-  .kernel-monitor-table td {
+  .monitor-table th,
+  .monitor-table td {
     padding: 0.1em 0.3em;
   }
 }

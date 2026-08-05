@@ -28,7 +28,7 @@ const getKernelKey = (kernel) => {
     return kernel.id;
   }
   if (!kernelKeys.has(kernel)) {
-    kernelKeys.set(kernel, `kernel-monitor-${nextKernelKey++}`);
+    kernelKeys.set(kernel, `monitor-${nextKernelKey++}`);
   }
   return kernelKeys.get(kernel);
 };
@@ -52,7 +52,7 @@ const openEditor = (filePath) => {
 /**
  * Every running kernel, with its state and the files it serves.
  */
-class KernelMonitor {
+class Monitor {
   constructor({ provider }) {
     this.provider = provider;
     this.selectedKey = null;
@@ -186,19 +186,19 @@ class KernelMonitor {
     return (
       <tr
         key={key}
-        className={key === selectedKey ? "kernel-monitor-row selected" : "kernel-monitor-row"}
+        className={key === selectedKey ? "monitor-row selected" : "monitor-row"}
         onClick={() => this.select(key)}
       >
-        <td className="kernel-monitor-gateway">{kernel.gatewayName || "Local"}</td>
-        <td className="kernel-monitor-kernel">
+        <td className="monitor-gateway">{kernel.gatewayName || "Local"}</td>
+        <td className="monitor-kernel">
           <a onClick={() => showKernelSpec(kernel)} title="Show kernel spec">
             {kernel.displayName || "Unknown"}
           </a>
         </td>
-        <td className="kernel-monitor-status">{kernel.executionState || "unknown"}</td>
-        <td className="kernel-monitor-count">{String(kernel.executionCount ?? 0)}</td>
-        <td className="kernel-monitor-time">{kernel.lastExecutionTime || "N/A"}</td>
-        <td className="kernel-monitor-managements">
+        <td className="monitor-status">{kernel.executionState || "unknown"}</td>
+        <td className="monitor-count">{String(kernel.executionCount ?? 0)}</td>
+        <td className="monitor-time">{kernel.lastExecutionTime || "N/A"}</td>
+        <td className="monitor-managements">
           <a className="icon icon-zap" onClick={() => interrupt(kernel)} title="Interrupt kernel" />
           <a className="icon icon-sync" onClick={() => restart(kernel)} title="Restart kernel" />
           {isRemote ? (
@@ -210,7 +210,7 @@ class KernelMonitor {
             title="Shutdown kernel"
           />
         </td>
-        <td className="kernel-monitor-files">{this.renderFileLinks(files)}</td>
+        <td className="monitor-files">{this.renderFileLinks(files)}</td>
       </tr>
     );
   }
@@ -221,10 +221,10 @@ class KernelMonitor {
     const selectedKey = selected ? getKernelKey(selected) : null;
 
     return (
-      <div className="kernel-monitor-wrapper" tabIndex={-1}>
-        <table className="kernel-monitor-table">
+      <div className="monitor-wrapper" tabIndex={-1}>
+        <table className="monitor-table">
           <thead>
-            <tr className="kernel-monitor-header">
+            <tr className="monitor-header">
               <th>Gateway</th>
               <th>Kernel</th>
               <th>Status</th>
@@ -251,4 +251,4 @@ class KernelMonitor {
   }
 }
 
-module.exports = KernelMonitor;
+module.exports = Monitor;

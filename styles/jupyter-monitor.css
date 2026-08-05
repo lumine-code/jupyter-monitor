@@ -1,15 +1,15 @@
 .jupyter-monitor {
-  .kernel-monitor-wrapper {
+  .monitor-wrapper {
     overflow-y: auto;
     overflow-x: hidden;
     cursor: default;
     outline: none;
 
-    .kernel-monitor-row.selected > td {
+    .monitor-row.selected > td {
       background-color: rgb(from var(--text-color-info) r g b / 0.25);
     }
 
-    .kernel-monitor-table {
+    .monitor-table {
       width: 100%;
 
       > thead {
@@ -38,12 +38,12 @@
         white-space: nowrap;
       }
 
-      .kernel-monitor-count,
-      .kernel-monitor-time {
+      .monitor-count,
+      .monitor-time {
         text-align: right;
       }
 
-      .kernel-monitor-managements {
+      .monitor-managements {
         text-align: center;
         white-space: nowrap;
 
@@ -58,7 +58,7 @@
         }
       }
 
-      .kernel-monitor-files {
+      .monitor-files {
         text-align: left;
         white-space: pre-wrap;
       }
