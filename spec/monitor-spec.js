@@ -138,18 +138,21 @@ describe("kernel monitor", () => {
     component = new Monitor({ provider });
     flush(component);
 
-    // Down enters at the first row, like the linter panel; the tint stays
-    // put: the cursor is its own mark.
+    // The first press offsets from the current row: down from the tinted
+    // kernel reaches its neighbour. The tint stays put: the cursor is its
+    // own mark.
     component.move(1);
     flush(component);
     expect(rows()[0].classList.contains("current")).toBe(true);
-    expect(rows()[0].classList.contains("focused")).toBe(true);
-
-    component.move(1);
-    flush(component);
     expect(rows()[1].classList.contains("focused")).toBe(true);
 
-    // Up with no cursor enters at the last row.
+    component.move(-1);
+    flush(component);
+    expect(rows()[0].classList.contains("focused")).toBe(true);
+
+    // With no cursor and no current row, the list is entered from the end
+    // the key came from.
+    provider.setActive(null);
     component.focusedKey = null;
     component.move(-1);
     flush(component);

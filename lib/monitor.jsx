@@ -159,13 +159,15 @@ class Monitor {
     if (!kernels.length) {
       return;
     }
-    const focused = this.focusedKernel(kernels);
+    // The cursor moves relative to where it is — or, on the first press,
+    // relative to the current row, so going down from the tinted kernel
+    // reaches its neighbour rather than re-marking it. With neither, the
+    // list is entered from the end the key came from.
+    const origin = this.focusedKernel(kernels) || this.currentKernel(kernels);
     let index;
-    if (focused) {
-      index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(focused) + delta));
+    if (origin) {
+      index = Math.min(kernels.length - 1, Math.max(0, kernels.indexOf(origin) + delta));
     } else {
-      // No cursor yet: enter the list from the end the key came from, the
-      // way the linter panel does.
       index = delta > 0 ? 0 : kernels.length - 1;
     }
     this.focusedKey = getKernelKey(kernels[index]);
