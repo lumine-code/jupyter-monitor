@@ -167,7 +167,10 @@ class Monitor {
   }
 
   openFiles() {
-    const kernel = this.targetKernel();
+    this.openFilesFor(this.targetKernel());
+  }
+
+  openFilesFor(kernel) {
     if (!kernel) {
       return;
     }
@@ -178,6 +181,17 @@ class Monitor {
         openEditor(filePath);
       }
     }
+  }
+
+  // The row itself is a hyperlink to the kernel's files, the way a linter row
+  // jumps to its message. Anything that is a link of its own — the file
+  // links, the action icons, the kernel-spec name — keeps its own click.
+  handleRowClick(event, kernel, key) {
+    if (event.target.closest("a")) {
+      return;
+    }
+    this.select(key);
+    this.openFilesFor(kernel);
   }
 
   select(key) {
@@ -215,7 +229,11 @@ class Monitor {
     }
 
     return (
-      <tr key={key} className={classes.join(" ")} onClick={() => this.select(key)}>
+      <tr
+        key={key}
+        className={classes.join(" ")}
+        onClick={(event) => this.handleRowClick(event, kernel, key)}
+      >
         <td className="monitor-gateway">{kernel.gatewayName || "Local"}</td>
         <td className="monitor-kernel">
           <a onClick={() => showKernelSpec(kernel)} title="Show kernel spec">

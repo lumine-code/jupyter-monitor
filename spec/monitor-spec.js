@@ -171,6 +171,31 @@ describe("kernel monitor", () => {
     expect(r.acted).toBe("focused");
   });
 
+  it("opens the kernel's files on a row click, links excepted", () => {
+    const python = fakeKernel("Python 3");
+    const files = new Map([[python, ["/tmp/analysis.py"]]]);
+    component = new Monitor({ provider: fakeProvider([python], files) });
+    flush(component);
+
+    const opened = [];
+    spyOn(atom.workspace, "open").and.callFake((uri) => {
+      opened.push(uri);
+      return Promise.resolve();
+    });
+
+    // A plain cell click jumps to the file.
+    rows()[0].querySelector(".monitor-status").dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    expect(opened.length).toBe(1);
+
+    // A click on the kernel-name link keeps its own meaning.
+    rows()[0].querySelector(".monitor-kernel a").dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    expect(opened.length).toBe(1);
+  });
+
   it("redraws when a kernel reports a status change", () => {
     const python = fakeKernel("Python 3");
     component = new Monitor({ provider: fakeProvider([python]) });
