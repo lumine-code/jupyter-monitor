@@ -76,7 +76,10 @@ class KernelMonitor {
         this.selectedKey = null;
         etch.update(this);
       }),
-      this.provider.onDidChangeKernel(() => etch.update(this)),
+      this.provider.observeActiveKernel((kernel) => {
+        this.activeKernel = kernel;
+        etch.update(this);
+      }),
       this.provider.onDidChangeKernels(() => this.watchKernels()),
     );
 
@@ -101,8 +104,9 @@ class KernelMonitor {
   }
 
   // The highlighted kernel: a manual selection if one is set, otherwise the
-  // kernel of the active editor, otherwise the first, so a keyboard action
-  // always has a target.
+  // kernel of the file active in the workspace centre — as observed off the
+  // provider, so every change arrives after jupyter-repl has processed it —
+  // otherwise the first, so a keyboard action always has a target.
   selectedKernel(kernels = this.kernels()) {
     if (!kernels.length) {
       return null;
@@ -113,9 +117,8 @@ class KernelMonitor {
         return manual;
       }
     }
-    const active = this.provider.getActiveKernel();
-    if (active && kernels.includes(active)) {
-      return active;
+    if (this.activeKernel && kernels.includes(this.activeKernel)) {
+      return this.activeKernel;
     }
     return kernels[0];
   }

@@ -57,7 +57,16 @@ function fakeProvider(kernels, files = new Map()) {
       return this.active;
     },
     getFilesForKernel: (kernel) => files.get(kernel) || [],
-    onDidChangeKernel: () => ({ dispose() {} }),
+    observeActiveKernel(callback) {
+      this.activeCallbacks.push(callback);
+      callback(this.active);
+      return { dispose() {} };
+    },
+    setActive(kernel) {
+      this.active = kernel;
+      this.activeCallbacks.slice().forEach((callback) => callback(kernel));
+    },
+    activeCallbacks: [],
     onDidChangeKernels(callback) {
       kernelsCallbacks.push(callback);
       return { dispose() {} };
@@ -113,6 +122,22 @@ describe("kernel monitor", () => {
     flush(component);
 
     expect(rows()[0].classList.contains("selected")).toBe(true);
+  });
+
+  it("follows the observed active kernel across tab switches", () => {
+    const python = fakeKernel("Python 3");
+    const r = fakeKernel("R");
+    const provider = fakeProvider([python, r]);
+    component = new KernelMonitor({ provider });
+    flush(component);
+
+    expect(rows()[0].classList.contains("selected")).toBe(true);
+
+    // What jupyter-repl announces after the user switches to the R file.
+    provider.setActive(r);
+    flush(component);
+
+    expect(rows()[1].classList.contains("selected")).toBe(true);
   });
 
   it("runs an action against the highlighted kernel", () => {
