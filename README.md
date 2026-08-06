@@ -40,9 +40,9 @@ The tinted row is the kernel of the file you are editing, and it follows along a
 
 ## Customization
 
-Paste this into your `styles.less` to make the table more compact:
+Paste this into your `styles.css` to make the table more compact:
 
-```less
+```css
 .jupyter-monitor {
   .monitor-table th,
   .monitor-table td {
