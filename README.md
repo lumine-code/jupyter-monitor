@@ -23,7 +23,7 @@ It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyte
 
 Commands available in `atom-workspace`:
 
-- `jupyter-monitor:toggle`: open the kernel monitor, or return focus to the editor when it already has it.
+- `jupyter-monitor:toggle-focus`: open the kernel monitor, or return focus to the editor when it already has it.
 
 Commands available in `.monitor-wrapper`:
 

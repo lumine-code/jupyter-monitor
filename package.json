@@ -21,7 +21,7 @@
     "lumine": "^1.0.0"
   },
   "backgroundTips": [
-    "You can see every running kernel, and interrupt or restart any of them, with {{ 'jupyter-monitor:toggle' | keystroke }}"
+    "You can see every running kernel, and interrupt or restart any of them, with {{ 'jupyter-monitor:toggle-focus' | keystroke }}"
   ],
   "main": "./lib/main",
   "files": [
@@ -39,7 +39,7 @@
   },
   "activationCommands": {
     "atom-workspace": [
-      "jupyter-monitor:toggle"
+      "jupyter-monitor:toggle-focus"
     ]
   },
   "consumedServices": {

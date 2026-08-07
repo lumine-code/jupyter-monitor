@@ -7,8 +7,8 @@
           "label": "Jupyter Monitor",
           "submenu": [
             {
-              "label": "Toggle Kernel Monitor",
-              "command": "jupyter-monitor:toggle"
+              "label": "Toggle Focus",
+              "command": "jupyter-monitor:toggle-focus"
             }
           ]
         }
