@@ -209,7 +209,7 @@ describe("kernel monitor", () => {
     flush(component);
 
     const opened = [];
-    spyOn(atom.workspace, "open").and.callFake((uri) => {
+    spyOn(lumine.workspace, "open").and.callFake((uri) => {
       opened.push(uri);
       return Promise.resolve();
     });
@@ -240,7 +240,7 @@ describe("kernel monitor", () => {
     provider.active = python;
     component = new Monitor({ provider });
     flush(component);
-    spyOn(atom.workspace, "open").and.returnValue(Promise.resolve());
+    spyOn(lumine.workspace, "open").and.returnValue(Promise.resolve());
 
     component.move(1);
     flush(component);
@@ -250,12 +250,12 @@ describe("kernel monitor", () => {
     component.confirmFocused();
     flush(component);
     expect(component.element.querySelectorAll(".monitor-row.focused").length).toBe(0);
-    expect(atom.workspace.open).toHaveBeenCalled();
+    expect(lumine.workspace.open).toHaveBeenCalled();
 
     // Enter with no cursor does nothing.
-    atom.workspace.open.calls.reset();
+    lumine.workspace.open.calls.reset();
     component.confirmFocused();
-    expect(atom.workspace.open).not.toHaveBeenCalled();
+    expect(lumine.workspace.open).not.toHaveBeenCalled();
 
     // And leaving the panel clears it too.
     component.move(1);
@@ -334,7 +334,7 @@ describe("kernel monitor pane", () => {
   // `pane.destroyItem`, and a pane only drops an item that tells it so.
   it("leaves no tab behind when destroyed directly", () => {
     const pane = new MonitorPane(fakeProvider([]));
-    const workspacePane = atom.workspace.getCenter().getActivePane();
+    const workspacePane = lumine.workspace.getCenter().getActivePane();
     workspacePane.addItem(pane);
 
     expect(workspacePane.getItems()).toContain(pane);

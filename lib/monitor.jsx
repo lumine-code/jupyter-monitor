@@ -6,11 +6,11 @@ function addDomListener(element, event, handler) {
   element.addEventListener(event, handler);
   return { dispose: () => element.removeEventListener(event, handler) };
 }
-const { CompositeDisposable } = require("atom");
+const { CompositeDisposable } = require("lumine");
 const { isUnsavedFilePath, tildify } = require("./utils");
 
 const showKernelSpec = (kernel) => {
-  atom.notifications.addInfo("Kernel Spec", {
+  lumine.notifications.addInfo("Kernel Spec", {
     detail: JSON.stringify(kernel.kernelSpec, null, 2),
     dismissable: true,
   });
@@ -41,18 +41,18 @@ const getKernelKey = (kernel) => {
 };
 
 const openUnsavedEditor = (filePath) => {
-  const editor = atom.workspace.getTextEditors().find((candidate) => {
+  const editor = lumine.workspace.getTextEditors().find((candidate) => {
     const match = filePath.match(/\d+/);
     return match ? String(candidate.id) === match[0] : false;
   });
   if (editor) {
-    atom.workspace.open(editor, { searchAllPanes: true });
+    lumine.workspace.open(editor, { searchAllPanes: true });
   }
 };
 
 const openEditor = (filePath) => {
-  atom.workspace.open(filePath, { searchAllPanes: true }).catch((error) => {
-    atom.notifications.addError("jupyter-monitor", { description: error });
+  lumine.workspace.open(filePath, { searchAllPanes: true }).catch((error) => {
+    lumine.notifications.addError("jupyter-monitor", { description: error });
   });
 };
 
@@ -74,7 +74,7 @@ class Monitor {
     etch.initialize(this);
 
     this.disposables = new CompositeDisposable(
-      atom.commands.add(this.element, {
+      lumine.commands.add(this.element, {
         "core:move-up": (event) => {
           event.stopPropagation();
           this.move(-1);
@@ -191,7 +191,7 @@ class Monitor {
   cancelFocus() {
     this.focusedKey = null;
     etch.update(this);
-    atom.workspace.getActiveTextEditor()?.element?.focus();
+    lumine.workspace.getActiveTextEditor()?.element?.focus();
   }
 
   act(fn) {

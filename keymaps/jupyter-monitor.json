@@ -1,9 +1,9 @@
 {
-  "atom-workspace": {
+  "lumine-workspace": {
     "alt-j m": "jupyter-monitor:toggle-focus"
   },
 
-  "atom-workspace .monitor-wrapper": {
+  "lumine-workspace .monitor-wrapper": {
     "up": "core:move-up",
     "down": "core:move-down",
     "enter": "core:confirm",

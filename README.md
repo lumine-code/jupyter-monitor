@@ -21,7 +21,7 @@ It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyte
 
 ## Commands
 
-Commands available in `atom-workspace`:
+Commands available in `lumine-workspace`:
 
 - `jupyter-monitor:toggle-focus`: open the kernel monitor, or return focus to the editor when it already has it.
 
