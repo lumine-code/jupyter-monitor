@@ -15,7 +15,7 @@ Kernels are started per file, so a session with several notebooks open has sever
 
 ## Installation
 
-To install `jupyter-monitor` search for _jupyter-monitor_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/jupyter-monitor`.
+To install `jupyter-monitor` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-monitor`.
 
 It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyter-repl), which needs to be installed too.
 
@@ -53,7 +53,7 @@ Paste this into your `styles.css` to make the table more compact:
 
 ## Services
 
-- **jupyter.kernel** (`^1.0.0`): consumed to read the running kernels, follow the active one, and control any of them.
+- `jupyter.kernel`: consumed to read the running kernels, follow the active one, and control any of them.
 
 ## Contributing
 
