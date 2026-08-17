@@ -91,10 +91,22 @@ class Monitor {
           event.stopPropagation();
           this.cancelFocus();
         },
-        "jupyter-monitor:open": () => this.openFiles(),
-        "jupyter-monitor:interrupt": () => this.act(interrupt),
-        "jupyter-monitor:restart": () => this.act(restart),
-        "jupyter-monitor:shutdown": () => this.act(shutdown),
+        "jupyter-monitor:open": {
+          description: "Open the file the selected kernel is serving.",
+          didDispatch: () => this.openFiles(),
+        },
+        "jupyter-monitor:interrupt": {
+          description: "Interrupt the kernel selected in the monitor.",
+          didDispatch: () => this.act(interrupt),
+        },
+        "jupyter-monitor:restart": {
+          description: "Restart the kernel selected in the monitor.",
+          didDispatch: () => this.act(restart),
+        },
+        "jupyter-monitor:shutdown": {
+          description: "Shut down the kernel selected in the monitor.",
+          didDispatch: () => this.act(shutdown),
+        },
       }),
       // Leaving the panel ends the keyboard journey too: the cursor does not
       // lie in wait to reappear on the next visit.
