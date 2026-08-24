@@ -18,11 +18,11 @@
       }
 
       &.current > td {
-        background-color: rgb(from var(--text-color-info) r g b / 0.25);
+        background-color: rgb(from var(--accent-color) r g b / 0.25);
       }
 
       &.current:hover > td {
-        background-color: rgb(from var(--text-color-info) r g b / 0.3);
+        background-color: rgb(from var(--accent-color) r g b / 0.3);
       }
     }
 
