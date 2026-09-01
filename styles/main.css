@@ -64,6 +64,10 @@
         text-align: center;
         white-space: nowrap;
 
+        a {
+          cursor: default;
+        }
+
         .icon::before {
           padding-right: 5px;
           padding-left: 5px;
