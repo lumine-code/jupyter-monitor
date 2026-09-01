@@ -11,7 +11,7 @@
        panel has focus, further below. */
     .monitor-row {
       transition: background-color 0.15s ease-out;
-      cursor: pointer;
+      cursor: default;
 
       &:hover > td {
         background-color: rgb(from var(--text-color) r g b / 0.06);
