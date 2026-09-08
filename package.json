@@ -37,6 +37,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
+  "deserializers": {
+    "jupyter-monitor/MonitorPane": "deserializeMonitorPane"
+  },
   "activationCommands": {
     "lumine-workspace": [
       "jupyter-monitor:toggle-focus"
