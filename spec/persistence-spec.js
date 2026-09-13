@@ -53,6 +53,8 @@ describe("jupyter monitor pane persistence", () => {
     const restored = main.deserializeMonitorPane();
 
     expect(restored.serialize()).toEqual(STATE);
+    expect(restored.getDefaultLocation()).toBe("bottom");
+    expect(restored.getAllowedLocations()).toEqual(["bottom"]);
   });
 
   it("round-trips through the manifest-registered proxy before activation", () => {
