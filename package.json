@@ -40,11 +40,6 @@
   "deserializers": {
     "jupyter-monitor/MonitorPane": "deserializeMonitorPane"
   },
-  "activationCommands": {
-    "lumine-workspace": [
-      "jupyter-monitor:toggle-focus"
-    ]
-  },
   "consumedServices": {
     "jupyter.kernel": {
       "versions": {
