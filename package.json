@@ -20,9 +20,6 @@
   "engines": {
     "lumine": "^1.0.0"
   },
-  "backgroundTips": [
-    "You can see every running kernel, and interrupt or restart any of them, with {{ 'jupyter-monitor:toggle-focus' | keystroke }}"
-  ],
   "main": "./lib/main",
   "files": [
     "keymaps",
@@ -39,6 +36,13 @@
   },
   "deserializers": {
     "jupyter-monitor/MonitorPane": "deserializeMonitorPane"
+  },
+  "providedServices": {
+    "background-tips.provider": {
+      "versions": {
+        "1.0.0": "provideBackgroundTips"
+      }
+    }
   },
   "consumedServices": {
     "jupyter.kernel": {
