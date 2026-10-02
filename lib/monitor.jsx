@@ -16,9 +16,24 @@ const showKernelSpec = (kernel) => {
   });
 };
 
-const interrupt = (kernel) => kernel.interrupt();
-const restart = (kernel) => kernel.restart();
-const shutdown = (kernel) => kernel.shutdown();
+function runKernelAction(kernel, action) {
+  const reportError = (error) => {
+    lumine.notifications.addError("Jupyter kernel command failed", {
+      detail: error.message || String(error),
+      dismissable: true,
+    });
+  };
+  try {
+    const result = kernel[action]();
+    return result?.catch ? result.catch(reportError) : result;
+  } catch (error) {
+    reportError(error);
+  }
+}
+
+const interrupt = (kernel) => runKernelAction(kernel, "interrupt");
+const restart = (kernel) => runKernelAction(kernel, "restart");
+const shutdown = (kernel) => runKernelAction(kernel, "shutdown");
 
 const rename = (kernel) => {
   // Only a remote session can be renamed, and only the provider knows how.
@@ -69,7 +84,7 @@ class Monitor {
     this.focusedKey = null;
     this.activeKernel = null;
     // One status subscription per kernel, rebuilt whenever the set changes.
-    this.kernelSubscriptions = new CompositeDisposable();
+    this.kernelSubscriptions = new Map();
 
     etch.initialize(this);
 
@@ -117,6 +132,7 @@ class Monitor {
         }
       }),
       this.provider.observeActiveKernel((kernel) => {
+        if (this.destroyed) return;
         this.activeKernel = kernel;
         etch.update(this);
       }),
@@ -129,11 +145,22 @@ class Monitor {
   // Each row shows a kernel's live state, which only that kernel announces, so
   // the table listens to every running kernel rather than to the provider alone.
   watchKernels() {
-    this.kernelSubscriptions.dispose();
-    this.kernelSubscriptions = new CompositeDisposable();
-    for (const kernel of this.kernels()) {
-      if (kernel.onDidChangeStatus) {
-        this.kernelSubscriptions.add(kernel.onDidChangeStatus(() => etch.update(this)));
+    if (this.destroyed) return;
+    const kernels = new Set(this.kernels());
+    for (const [kernel, subscription] of this.kernelSubscriptions) {
+      if (!kernels.has(kernel)) {
+        subscription.dispose();
+        this.kernelSubscriptions.delete(kernel);
+      }
+    }
+    for (const kernel of kernels) {
+      if (!this.kernelSubscriptions.has(kernel) && kernel.onDidChangeStatus) {
+        this.kernelSubscriptions.set(
+          kernel,
+          kernel.onDidChangeStatus(() => {
+            if (!this.destroyed) etch.update(this);
+          }),
+        );
       }
     }
     etch.update(this);
@@ -209,7 +236,7 @@ class Monitor {
   act(fn) {
     const kernel = this.targetKernel();
     if (kernel) {
-      fn(kernel);
+      return fn(kernel);
     }
   }
 
@@ -334,7 +361,10 @@ class Monitor {
   }
 
   destroy() {
-    this.kernelSubscriptions.dispose();
+    if (this.destroyed) return Promise.resolve();
+    this.destroyed = true;
+    for (const subscription of this.kernelSubscriptions.values()) subscription.dispose();
+    this.kernelSubscriptions.clear();
     this.disposables.dispose();
     return etch.destroy(this);
   }

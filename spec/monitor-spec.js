@@ -294,6 +294,51 @@ describe("kernel monitor", () => {
     expect(r.listenerCount()).toBe(1);
   });
 
+  it("retains status subscriptions when only a file mapping changes", () => {
+    const python = fakeKernel("Python 3");
+    spyOn(python, "onDidChangeStatus").and.callThrough();
+    const provider = fakeProvider([python]);
+    component = new Monitor({ provider });
+    flush(component);
+    provider.setKernels([python]);
+    flush(component);
+    expect(python.onDidChangeStatus).toHaveBeenCalledTimes(1);
+    expect(python.listenerCount()).toBe(1);
+  });
+
+  it("reports an asynchronous restart failure from its action icon", async () => {
+    const python = fakeKernel("Python 3", {
+      restart: () => Promise.reject(new Error("Kernel exited")),
+    });
+    component = new Monitor({ provider: fakeProvider([python]) });
+    flush(component);
+    spyOn(lumine.notifications, "addError");
+    component.element
+      .querySelector(".icon-sync")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    expect(lumine.notifications.addError).toHaveBeenCalledWith("Jupyter kernel command failed", {
+      detail: "Kernel exited",
+      dismissable: true,
+    });
+  });
+
+  it("reports a revoked wrapper's synchronous command failure", async () => {
+    const python = fakeKernel("Python 3", {
+      interrupt: () => {
+        throw new Error("Kernel destroyed");
+      },
+    });
+    component = new Monitor({ provider: fakeProvider([python]) });
+    flush(component);
+    spyOn(lumine.notifications, "addError");
+    await lumine.commands.dispatch(component.element, "jupyter-monitor:interrupt");
+    expect(lumine.notifications.addError).toHaveBeenCalledWith("Jupyter kernel command failed", {
+      detail: "Kernel destroyed",
+      dismissable: true,
+    });
+  });
+
   it("lists the files a kernel serves", () => {
     const python = fakeKernel("Python 3");
     const files = new Map([[python, ["Unsaved Editor 7"]]]);
