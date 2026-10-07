@@ -350,7 +350,10 @@ describe("kernel monitor", () => {
 
   it("offers a rename only for a remote session", () => {
     const local = fakeKernel("Python 3");
-    const remote = fakeKernel("Remote", { gatewayName: "gateway-1" });
+    const remote = fakeKernel("Remote", {
+      gatewayName: "gateway-1",
+      capabilities: { rename: true },
+    });
     component = new Monitor({ provider: fakeProvider([local, remote]) });
     flush(component);
 

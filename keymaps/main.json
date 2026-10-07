@@ -3,10 +3,11 @@
     "alt-j m": "jupyter-monitor:toggle-focus"
   },
 
-  "lumine-workspace .monitor-wrapper": {
+  ".jupyter-monitor .monitor-wrapper": {
     "up": "core:move-up",
     "down": "core:move-down",
     "enter": "core:confirm",
+    "escape": "core:cancel",
     "i": "jupyter-monitor:interrupt",
     "r": "jupyter-monitor:restart",
     "s": "jupyter-monitor:shutdown"

@@ -1,9 +1,9 @@
 const path = require("path");
 const etch = require("@lumine-code/etch");
 const manifest = require("../package.json");
-const main = require("../lib/main");
+let main;
 const { MONITOR_URI } = require("../lib/utils");
-const MonitorPane = require("../lib/monitor-pane");
+let MonitorPane;
 
 const DESERIALIZER = "jupyter-monitor/MonitorPane";
 const STATE = { deserializer: DESERIALIZER };
@@ -31,6 +31,12 @@ function fakeProvider() {
 
 describe("jupyter monitor pane persistence", () => {
   let loadedPackage = null;
+  beforeEach(async () => {
+    if (lumine.packages.isPackageLoaded("jupyter-monitor"))
+      await lumine.packages.unloadPackage("jupyter-monitor");
+    main = require("../lib/main");
+    MonitorPane = require("../lib/monitor-pane");
+  });
 
   afterEach(async () => {
     if (loadedPackage && lumine.packages.isPackageActive(loadedPackage.name)) {
@@ -110,19 +116,16 @@ describe("jupyter monitor pane persistence", () => {
     expect(restored.component.element.querySelectorAll(".monitor-row").length).toBe(1);
 
     service.dispose();
-    expect(restored.destroyed).toBe(true);
-    expect(lumine.workspace.getPaneItems()).not.toContain(restored);
+    expect(restored.destroyed).not.toBe(true);
+    expect(lumine.workspace.getPaneItems()).toContain(restored);
+    expect(restored.component.provider.getRunningKernels()).toEqual([]);
   });
 
-  it("still warns instead of creating a newly opened pane without a provider", async () => {
+  it("opens a real empty table while a provider is unavailable", async () => {
     main.activate();
-    spyOn(lumine.notifications, "addWarning");
-
     const opened = await lumine.workspace.open(MONITOR_URI, { searchAllPanes: true });
-
-    expect(opened).toBeUndefined();
-    expect(lumine.notifications.addWarning).toHaveBeenCalledWith("jupyter-monitor", {
-      description: "Waiting for `jupyter-repl` to provide a kernel.",
-    });
+    expect(opened).toBeTruthy();
+    expect(opened.serialize()).toEqual(STATE);
+    expect(opened.component.provider.getRunningKernels()).toEqual([]);
   });
 });

@@ -30,6 +30,43 @@ describe("monitor provider replacement", () => {
     expect(pane.destroyed).not.toBe(true);
     expect(pane.component.provider).toBe(replacementProvider);
     replacement.dispose();
-    expect(pane.destroyed).toBe(true);
+    expect(pane.destroyed).not.toBe(true);
+    expect(pane.component.provider.getRunningKernels()).toEqual([]);
+  });
+
+  it("keeps a same-object replacement edge until that edge is disposed", () => {
+    const current = provider();
+    const pane = main.deserializeMonitorPane();
+    const old = main.consumeJupyterKernel(current);
+    const replacement = main.consumeJupyterKernel(current);
+    old.dispose();
+    expect(pane.component.provider).toBe(current);
+    replacement.dispose();
+    expect(pane.destroyed).not.toBe(true);
+    expect(pane.component.provider.getRunningKernels()).toEqual([]);
+  });
+
+  it("keeps consumption passive and requests the runtime only from a user action", async () => {
+    const request = spyOn(lumine.packages, "requestService").and.resolveTo(true);
+    const edge = main.consumeJupyterKernel(provider());
+    expect(request).not.toHaveBeenCalled();
+    edge.dispose();
+    await main.toggleFocus();
+    expect(request).toHaveBeenCalledWith("jupyter.kernel", "^1.0.0");
+  });
+
+  it("does not create UI after deactivation while availability was pending", async () => {
+    let ready;
+    spyOn(lumine.packages, "requestService").and.returnValue(
+      new Promise((resolve) => {
+        ready = resolve;
+      }),
+    );
+    const open = spyOn(lumine.workspace, "open");
+    const pending = main.toggleFocus();
+    main.deactivate();
+    ready(true);
+    await pending;
+    expect(open).not.toHaveBeenCalled();
   });
 });

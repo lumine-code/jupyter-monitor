@@ -16,7 +16,7 @@ const showKernelSpec = (kernel) => {
   });
 };
 
-function runKernelAction(kernel, action) {
+function runKernelAction(kernel, action, ...args) {
   const reportError = (error) => {
     lumine.notifications.addError("Jupyter kernel command failed", {
       detail: error.message || String(error),
@@ -24,7 +24,7 @@ function runKernelAction(kernel, action) {
     });
   };
   try {
-    const result = kernel[action]();
+    const result = kernel[action](...args);
     return result?.catch ? result.catch(reportError) : result;
   } catch (error) {
     reportError(error);
@@ -35,25 +35,7 @@ const interrupt = (kernel) => runKernelAction(kernel, "interrupt");
 const restart = (kernel) => runKernelAction(kernel, "restart");
 const shutdown = (kernel) => runKernelAction(kernel, "shutdown");
 
-const rename = (kernel) => {
-  // Only a remote session can be renamed, and only the provider knows how.
-  if (kernel.promptRename) {
-    kernel.promptRename();
-  }
-};
-
-const kernelKeys = new WeakMap();
-let nextKernelKey = 1;
-
-const getKernelKey = (kernel) => {
-  if (kernel.id) {
-    return kernel.id;
-  }
-  if (!kernelKeys.has(kernel)) {
-    kernelKeys.set(kernel, `monitor-${nextKernelKey++}`);
-  }
-  return kernelKeys.get(kernel);
-};
+const getKernelKey = (kernel) => kernel.id;
 
 const openUnsavedEditor = (filePath) => {
   const editor = lumine.workspace.getTextEditors().find((candidate) => {
@@ -67,7 +49,7 @@ const openUnsavedEditor = (filePath) => {
 
 const openEditor = (filePath) => {
   lumine.workspace.open(filePath, { searchAllPanes: true }).catch((error) => {
-    lumine.notifications.addError("jupyter-monitor", { description: error });
+    lumine.notifications.addError("Jupyter kernel monitor", { description: error });
   });
 };
 
@@ -85,6 +67,7 @@ class Monitor {
     this.activeKernel = null;
     // One status subscription per kernel, rebuilt whenever the set changes.
     this.kernelSubscriptions = new Map();
+    this.pendingRenames = new Set();
 
     etch.initialize(this);
 
@@ -106,7 +89,7 @@ class Monitor {
           event.stopPropagation();
           this.cancelFocus();
         },
-        "jupyter-monitor:open": {
+        "jupyter-monitor:open-files": {
           description: "Open the file the selected kernel is serving.",
           didDispatch: () => this.openFiles(),
         },
@@ -142,6 +125,32 @@ class Monitor {
     this.watchKernels();
   }
 
+  promptRename(kernel) {
+    if (!kernel.capabilities?.rename) return;
+    const InputView = require("./rename-view");
+    const generation = kernel.generation;
+    const ownership = new CompositeDisposable();
+    let view;
+    const close = () => {
+      this.pendingRenames.delete(close);
+      ownership.dispose();
+      view?.close();
+    };
+    view = new InputView(
+      { prompt: "Name your current session", defaultText: kernel.displayName, allowCancel: true },
+      (name) => {
+        close();
+        if (this.destroyed || kernel.isDestroyed?.() || generation !== kernel.generation) return;
+        runKernelAction(kernel, "rename", name);
+      },
+      close,
+    );
+    this.pendingRenames.add(close);
+    if (kernel.onDidChangeGeneration) ownership.add(kernel.onDidChangeGeneration(close));
+    if (kernel.onDidDestroy) ownership.add(kernel.onDidDestroy(close));
+    view.attach();
+  }
+
   // Each row shows a kernel's live state, which only that kernel announces, so
   // the table listens to every running kernel rather than to the provider alone.
   watchKernels() {
@@ -155,12 +164,13 @@ class Monitor {
     }
     for (const kernel of kernels) {
       if (!this.kernelSubscriptions.has(kernel) && kernel.onDidChangeStatus) {
-        this.kernelSubscriptions.set(
-          kernel,
-          kernel.onDidChangeStatus(() => {
-            if (!this.destroyed) etch.update(this);
-          }),
-        );
+        const update = () => {
+          if (!this.destroyed) etch.update(this);
+        };
+        const subscriptions = new CompositeDisposable(kernel.onDidChangeStatus(update));
+        if (kernel.onDidChangeConnectionState)
+          subscriptions.add(kernel.onDidChangeConnectionState(update));
+        this.kernelSubscriptions.set(kernel, subscriptions);
       }
     }
     etch.update(this);
@@ -287,7 +297,7 @@ class Monitor {
 
   renderRow(kernel, currentKey, focusedKey) {
     const key = getKernelKey(kernel);
-    const isRemote = Boolean(kernel.gatewayName);
+    const canRename = Boolean(kernel.capabilities?.rename);
     const files = this.provider.getFilesForKernel(kernel);
     const classes = ["monitor-row"];
     if (key === currentKey) {
@@ -309,14 +319,22 @@ class Monitor {
             {kernel.displayName || "Unknown"}
           </a>
         </td>
-        <td className="monitor-status">{kernel.executionState || "unknown"}</td>
+        <td className="monitor-status">
+          {kernel.connectionState && kernel.connectionState !== "ready"
+            ? kernel.connectionState
+            : kernel.executionState || "unknown"}
+        </td>
         <td className="monitor-count">{String(kernel.executionCount ?? 0)}</td>
         <td className="monitor-time">{kernel.lastExecutionTime || "N/A"}</td>
         <td className="monitor-managements">
           <a className="icon icon-zap" onClick={() => interrupt(kernel)} title="Interrupt kernel" />
           <a className="icon icon-sync" onClick={() => restart(kernel)} title="Restart kernel" />
-          {isRemote ? (
-            <a className="icon icon-pencil" onClick={() => rename(kernel)} title="Rename session" />
+          {canRename ? (
+            <a
+              className="icon icon-pencil"
+              onClick={() => this.promptRename(kernel)}
+              title="Rename session"
+            />
           ) : null}
           <a
             className="icon icon-trashcan"
@@ -363,6 +381,7 @@ class Monitor {
   destroy() {
     if (this.destroyed) return Promise.resolve();
     this.destroyed = true;
+    for (const close of this.pendingRenames) close();
     for (const subscription of this.kernelSubscriptions.values()) subscription.dispose();
     this.kernelSubscriptions.clear();
     this.disposables.dispose();
