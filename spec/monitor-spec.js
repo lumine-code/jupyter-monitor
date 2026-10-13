@@ -382,7 +382,7 @@ describe("kernel monitor pane", () => {
   // `pane.destroyItem`, and a pane only drops an item that tells it so.
   it("leaves no tab behind when destroyed directly", () => {
     const pane = new MonitorPane(fakeProvider([]));
-    const workspacePane = lumine.workspace.getCenter().getActivePane();
+    const workspacePane = lumine.workspace.getBottomDock().getActivePane();
     workspacePane.addItem(pane);
 
     expect(workspacePane.getItems()).toContain(pane);
