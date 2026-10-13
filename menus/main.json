@@ -1,6 +1,20 @@
 {
   "menu": [
     {
+      "label": "View",
+      "submenu": [
+        {
+          "label": "Open View",
+          "submenu": [
+            {
+              "label": "Jupyter Monitor",
+              "command": "jupyter-monitor:toggle-focus"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "label": "Packages",
       "submenu": [
         {
