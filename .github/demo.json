@@ -1,0 +1,16 @@
+{
+  "title": "jupyter-monitor",
+  "description": "Use jupyter-monitor with the running Python kernel.",
+  "recordedOn": "2026-10-13",
+  "sourceRevision": "705db7dafb03d5f413e15b59324f2e3b55ceb1f7",
+  "mode": "normal",
+  "fontSettings": "default",
+  "images": [
+    {
+      "file": "demo.png",
+      "label": "Use jupyter-monitor with the running Python kernel.",
+      "width": 1200,
+      "height": 760
+    }
+  ]
+}

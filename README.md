@@ -12,6 +12,8 @@ Keep a dockable overview of local and remote sessions, their connection and exec
 - **Navigation**: opens served documents from a row or its individual file links.
 - **Persistence**: restores the same dock item before the runtime is available and reconnects it when a provider arrives.
 
+![Use jupyter-monitor with the running Python kernel.](.github/demo.png)
+
 ## Installation
 
 To install jupyter-monitor search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-monitor`. Install jupyter-repl to provide running sessions.
