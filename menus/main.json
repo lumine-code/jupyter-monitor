@@ -4,11 +4,13 @@
       "label": "View",
       "submenu": [
         {
-          "label": "Open View",
+          "label": "Jupyter",
           "submenu": [
             {
-              "label": "Jupyter Monitor",
-              "command": "jupyter-monitor:toggle-focus"
+              "label": "Toggle Monitor Focus",
+              "command": "jupyter-monitor:toggle-focus",
+              "group": "reveal",
+              "order": 30
             }
           ]
         }
