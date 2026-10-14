@@ -1,16 +1,76 @@
 {
   "title": "jupyter-monitor",
   "description": "Use jupyter-monitor with the running Python kernel.",
-  "recordedOn": "2026-10-13",
-  "sourceRevision": "705db7dafb03d5f413e15b59324f2e3b55ceb1f7",
+  "recordedOn": "2026-10-14",
+  "sourceRevision": "fdb0d6590b9346610145fb1243780e12c163f06a",
+  "themeSourceRevision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
   "mode": "normal",
   "fontSettings": "default",
+  "scenario": "demo.js",
+  "recipeHash": "3f9e16cb8fad1ce056d71afb6a31018ad34bfc5e3b67a1e03e2c87d54530763c",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "electron": "44.7.0",
+    "chrome": "152.0.7977.130",
+    "devicePixelRatio": 1,
+    "locale": "en-GB",
+    "fontFamily": "Fira Code, Menlo, DejaVu Sans Mono, Consolas, monospace",
+    "fontSize": 14,
+    "themes": ["one-day-syntax", "one-day-ui"]
+  },
+  "viewport": { "width": 1200, "height": 760 },
+  "cornerRadius": 10,
+  "sources": {
+    "editor": {
+      "revision": "8be8f86075ad93df038610d82b3ac6d99329957d",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "package": {
+      "revision": "fdb0d6590b9346610145fb1243780e12c163f06a",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-monitor": {
+      "revision": "fdb0d6590b9346610145fb1243780e12c163f06a",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-cells": {
+      "revision": "2f08b56b04633f28ae26a1fb0786af9e11966edc",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-repl": {
+      "revision": "22e65daeb62d6827fdd04cc529d4003cd450ea9f",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "language-python": {
+      "revision": "0ff5b68a22a196804b0ad2451f0c05ff419cf784",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "one-theme": {
+      "revision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "fixtures": [
+    {
+      "file": "jupyter/signal.py",
+      "sha256": "1cca25f8c327f4c05a594c0e3f410378f3869238f601e21f0a9ad58e39f07141"
+    }
+  ],
   "images": [
     {
       "file": "demo.png",
       "label": "Use jupyter-monitor with the running Python kernel.",
       "width": 1200,
-      "height": 760
+      "height": 760,
+      "sha256": "fc95e6347d3b753bf878e3fa491623f7b96937890bf0c8b1a64d1081df63c767"
     }
   ]
 }
