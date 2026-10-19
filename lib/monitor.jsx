@@ -59,7 +59,7 @@ const openEditor = (filePath) => {
 class Monitor {
   constructor({ provider }) {
     this.provider = provider;
-    // Two independent row states, the way the linter panel draws its list:
+    // Two independent row states, the way the diagnostics panel draws its list:
     // `current` marks the kernel of the file active in the workspace centre
     // and is always tinted; `focused` is the keyboard cursor, an outline the
     // stylesheet only shows while the panel has focus.

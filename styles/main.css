@@ -5,7 +5,7 @@
     cursor: default;
     outline: none;
 
-    /* Row states, the way the linter panel draws them: hover gives faint
+    /* Row states, the way the diagnostics panel draws them: hover gives faint
        feedback, `current` (the active file's kernel) is always tinted, and
        `focused` is the keyboard cursor — an outline shown only while the
        panel has focus, further below. */
