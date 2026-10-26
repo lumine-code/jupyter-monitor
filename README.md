@@ -47,6 +47,8 @@ Add this to your `styles.css` to adjust the table density.
 - `jupyter.kernel`: consumed to observe public sessions and control the selected one.
 - `background-tips.provider`: provided to introduce the kernel overview in the empty workspace.
 
+Session names are limited to 4096 UTF-16 units before extraction or rename requests. Oversized drafts stay in the prompt with a visible error; shortening the complete name restores confirmation.
+
 ## Contributing
 
 Got ideas to make this package better, found a bug, or want to help add new features? Just drop your thoughts on GitHub. Any feedback is welcome!
