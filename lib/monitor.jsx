@@ -353,7 +353,7 @@ class Monitor {
     const currentKey = current ? getKernelKey(current) : null;
 
     return (
-      <div className="monitor-wrapper" tabIndex={-1}>
+      <div className="monitor-wrapper" tabIndex={-1} attributes={{ "data-scrollbar": "auto" }}>
         <table className="monitor-table">
           <thead>
             <tr className="monitor-header">
