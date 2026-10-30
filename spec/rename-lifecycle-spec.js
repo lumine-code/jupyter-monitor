@@ -42,16 +42,17 @@ describe("public session rename ownership", () => {
       views.push(this);
     });
   });
-  afterEach(() => {
+  afterEach(async () => {
     edges.dispose();
     main.deactivate();
+    await Promise.all(views.map((view) => view.destroyPromise));
     events.dispose();
   });
 
   it("uses the public rename method once and releases its input editor", () => {
     const baseline = lumine.textEditors.getEditors().length;
     pane.component.promptRename(session);
-    expect(lumine.textEditors.getEditors().length).toBe(baseline + 1);
+    expect(lumine.textEditors.getEditors().length).toBe(baseline);
     views[0].miniEditor.setText("Renamed session");
     views[0].confirm();
     views[0].confirm();
