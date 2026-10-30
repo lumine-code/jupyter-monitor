@@ -1,7 +1,7 @@
 const { CompositeDisposable, Disposable, Emitter } = require("lumine");
 
 describe("public session rename ownership", () => {
-  let main, pane, events, views, session, edges;
+  let main, pane, events, views, session, edges, attachRename;
 
   beforeEach(() => {
     main = require("../lib/main");
@@ -38,6 +38,7 @@ describe("public session rename ownership", () => {
     edges.add(main.consumeJupyterKernel(provider));
     pane = main.deserializeMonitorPane();
     const RenameView = require("../lib/rename-view");
+    attachRename = RenameView.prototype.attach;
     spyOn(RenameView.prototype, "attach").and.callFake(function () {
       views.push(this);
     });
@@ -67,6 +68,24 @@ describe("public session rename ownership", () => {
     events.emit("generation", session.generation);
     expect(views[0].closed).toBe(true);
     views[0].confirm();
+    expect(session.rename).not.toHaveBeenCalled();
+  });
+
+  it("retires pending rename ownership when its modal panel is destroyed", async () => {
+    jasmine.attachToDOM(lumine.workspace.getElement());
+    const baseline = lumine.textEditors.getEditors().length;
+    pane.component.promptRename(session);
+    const view = views[0];
+    attachRename.call(view);
+    const editor = view.miniEditor;
+    expect(pane.component.pendingRenames.size).toBe(1);
+    view.host.getPanel().destroy();
+    await view.destroyPromise;
+    expect(view.closed).toBeTrue();
+    expect(view.dialog.isDestroyed()).toBeTrue();
+    expect(editor.isDestroyed()).toBeTrue();
+    expect(lumine.textEditors.getEditors().length).toBe(baseline);
+    expect(pane.component.pendingRenames.size).toBe(0);
     expect(session.rename).not.toHaveBeenCalled();
   });
 
