@@ -104,6 +104,9 @@ describe("jupyter monitor pane persistence", () => {
     etch.updateSync(emptyComponent);
 
     expect(emptyComponent.element.querySelectorAll(".monitor-row").length).toBe(0);
+    expect(emptyComponent.element.querySelector(".panel-empty-state li").textContent).toBe(
+      "Kernel service unavailable",
+    );
 
     main.activate();
     expect(await lumine.workspace.open(MONITOR_URI, { searchAllPanes: true })).toBe(restored);
@@ -114,11 +117,16 @@ describe("jupyter monitor pane persistence", () => {
     expect(restored.component).not.toBe(emptyComponent);
     expect(restored.component.provider).toBe(provider);
     expect(restored.component.element.querySelectorAll(".monitor-row").length).toBe(1);
+    expect(restored.component.element.querySelector(".panel-empty-state")).toBeNull();
 
     service.dispose();
     expect(restored.destroyed).not.toBe(true);
     expect(lumine.workspace.getPaneItems()).toContain(restored);
     expect(restored.component.provider.getRunningKernels()).toEqual([]);
+    etch.updateSync(restored.component);
+    expect(restored.component.element.querySelector(".panel-empty-state li").textContent).toBe(
+      "Kernel service unavailable",
+    );
   });
 
   it("opens a real empty table while a provider is unavailable", async () => {

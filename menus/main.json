@@ -21,14 +21,102 @@
       "submenu": [
         {
           "label": "Jupyter Monitor",
+          "groupOrder": ["view", "kernel", "extensions"],
           "submenu": [
             {
               "label": "Toggle Focus",
-              "command": "jupyter-monitor:toggle-focus"
+              "command": "jupyter-monitor:toggle-focus",
+              "group": "view",
+              "order": 10
+            },
+            {
+              "label": "Open Files",
+              "command": "jupyter-monitor:open-files",
+              "group": "view",
+              "order": 20
+            },
+            {
+              "label": "Show Kernel Spec",
+              "command": "jupyter-monitor:show-kernel-spec",
+              "group": "view",
+              "order": 30
+            },
+            {
+              "label": "Interrupt",
+              "command": "jupyter-monitor:interrupt",
+              "group": "kernel",
+              "order": 10
+            },
+            {
+              "label": "Restart",
+              "command": "jupyter-monitor:restart",
+              "group": "kernel",
+              "order": 20
+            },
+            {
+              "label": "Rename Session…",
+              "command": "jupyter-monitor:rename-session",
+              "group": "kernel",
+              "order": 30
+            },
+            {
+              "label": "Shutdown",
+              "command": "jupyter-monitor:shutdown",
+              "group": "kernel",
+              "order": 40
+            },
+            {
+              "label": "Shutdown All",
+              "command": "jupyter-monitor:shutdown-all",
+              "group": "kernel",
+              "order": 50
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "context-menu": {
+    ".jupyter-monitor .monitor-row": {
+      "groupOrder": ["open", "execution", "session", "extensions"],
+      "items": [
+        {
+          "label": "Open Files",
+          "command": "jupyter-monitor:open-files",
+          "group": "open",
+          "order": 10
+        },
+        {
+          "label": "Show Kernel Spec",
+          "command": "jupyter-monitor:show-kernel-spec",
+          "group": "open",
+          "order": 20
+        },
+        {
+          "label": "Interrupt",
+          "command": "jupyter-monitor:interrupt",
+          "group": "execution",
+          "order": 10
+        },
+        {
+          "label": "Restart",
+          "command": "jupyter-monitor:restart",
+          "group": "execution",
+          "order": 20
+        },
+        {
+          "label": "Rename Session…",
+          "command": "jupyter-monitor:rename-session",
+          "group": "session",
+          "order": 10
+        },
+        {
+          "label": "Shutdown",
+          "command": "jupyter-monitor:shutdown",
+          "group": "session",
+          "order": 20
+        }
+      ]
+    }
+  }
 }

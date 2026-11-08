@@ -1,4 +1,5 @@
 const { Disposable } = require("lumine");
+const etch = require("@lumine-code/etch");
 
 describe("monitor provider replacement", () => {
   let main;
@@ -44,6 +45,33 @@ describe("monitor provider replacement", () => {
     replacement.dispose();
     expect(pane.destroyed).not.toBe(true);
     expect(pane.component.provider.getRunningKernels()).toEqual([]);
+  });
+
+  it("retires old row commands when its provider disappears", async () => {
+    const kernel = {
+      id: "retired-kernel",
+      displayName: "Retired",
+      executionState: "idle",
+      interrupt: jasmine.createSpy("interrupt"),
+    };
+    const service = {
+      ...provider(),
+      getRunningKernels: () => [kernel],
+    };
+    const edge = main.consumeJupyterKernel(service);
+    const pane = main.deserializeMonitorPane();
+    const previous = pane.component;
+    etch.updateSync(previous);
+    const row = previous.element.querySelector(".monitor-row");
+    expect(lumine.commands.canDispatch(row, "jupyter-monitor:interrupt")).toBeTrue();
+
+    edge.dispose();
+    expect(previous.destroyed).toBeTrue();
+    expect(lumine.commands.canDispatch(row, "jupyter-monitor:interrupt")).toBeFalse();
+    await lumine.commands.dispatch(row, "jupyter-monitor:interrupt");
+    previous.act((target) => target.interrupt(), { target: row });
+    expect(kernel.interrupt).not.toHaveBeenCalled();
+    expect(pane.component.providerAvailable).toBeFalse();
   });
 
   it("keeps consumption passive and requests the runtime only from a user action", async () => {

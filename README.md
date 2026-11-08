@@ -7,7 +7,7 @@ Keep a dockable overview of local and remote sessions, their connection and exec
 ## Features
 
 - **Live sessions**: lists running kernels, gateway names, execution counts, timing and served documents.
-- **Session control**: interrupts, restarts and shuts down the selected session through its public API.
+- **Session control**: interrupts, restarts and shuts down sessions through their public API, with middle-click shutdown on a row and a header button to shut down all kernels.
 - **Remote names**: renames sessions whose provider exposes that capability.
 - **Navigation**: opens served documents from a row or its individual file links.
 - **Persistence**: restores the same dock item before the runtime is available and reconnects it when a provider arrives.
@@ -27,9 +27,12 @@ Commands available in `lumine-workspace`:
 Commands available in `.jupyter-monitor .monitor-wrapper`:
 
 - `jupyter-monitor:open-files`: open documents served by the selected session,
+- `jupyter-monitor:show-kernel-spec`: show the selected kernel's launch specification,
 - `jupyter-monitor:interrupt`: interrupt the selected session,
 - `jupyter-monitor:restart`: restart the selected session,
-- `jupyter-monitor:shutdown`: shut down the selected session.
+- `jupyter-monitor:rename-session`: rename the selected remote session,
+- `jupyter-monitor:shutdown`: shut down the selected session,
+- `jupyter-monitor:shutdown-all`: shut down every running session.
 
 ## Customization
 

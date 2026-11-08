@@ -36,6 +36,26 @@ const restart = (kernel) => runKernelAction(kernel, "restart");
 const shutdown = (kernel) => runKernelAction(kernel, "shutdown");
 
 const getKernelKey = (kernel) => kernel.id;
+const kernelNames = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+const getKernelStatus = (kernel) =>
+  kernel.connectionState && kernel.connectionState !== "ready"
+    ? kernel.connectionState
+    : kernel.executionState || "unknown";
+
+// The service exposes the last execution's elapsed duration as display text,
+// using seconds, minutes and hours. Unavailable values belong after real times.
+function executionDuration(value) {
+  if (typeof value !== "string") return null;
+  const pattern = /(\d+(?:\.\d+)?)\s*(ms|min|sec|h|m|s)\b/g;
+  const parts = [...value.matchAll(pattern)];
+  if (!parts.length || value.replace(pattern, "").trim()) return null;
+  const units = { ms: 1, min: 60000, sec: 1000, h: 3600000, m: 60000, s: 1000 };
+  const duration = parts.reduce(
+    (total, [, amount, unit]) => total + Number(amount) * units[unit],
+    0,
+  );
+  return Number.isFinite(duration) ? duration : null;
+}
 
 const openUnsavedEditor = (filePath) => {
   const editor = lumine.workspace.getTextEditors().find((candidate) => {
@@ -57,8 +77,11 @@ const openEditor = (filePath) => {
  * Every running kernel, with its state and the files it serves.
  */
 class Monitor {
-  constructor({ provider }) {
+  constructor({ provider, providerAvailable = true }) {
     this.provider = provider;
+    this.providerAvailable = providerAvailable;
+    this.sortColumn = null;
+    this.sortDirection = "ascending";
     // Two independent row states, the way the diagnostics panel draws its list:
     // `current` marks the kernel of the file active in the workspace centre
     // and is always tinted; `focused` is the keyboard cursor, an outline the
@@ -68,6 +91,8 @@ class Monitor {
     // One status subscription per kernel, rebuilt whenever the set changes.
     this.kernelSubscriptions = new Map();
     this.pendingRenames = new Set();
+    this.pendingShutdowns = new Map();
+    this.rowKernels = new WeakMap();
 
     etch.initialize(this);
 
@@ -83,6 +108,7 @@ class Monitor {
         },
         "core:confirm": (event) => {
           event.stopPropagation();
+          if (event.target.closest?.("button")) return;
           this.confirmFocused();
         },
         "core:cancel": (event) => {
@@ -91,20 +117,56 @@ class Monitor {
         },
         "jupyter-monitor:open-files": {
           description: "Open the file the selected kernel is serving.",
-          didDispatch: () => this.openFiles(),
+          isAvailable: (event) => Boolean(this.kernelForEvent(event)),
+          didDispatch: (event) => this.openFiles(event),
+        },
+        "jupyter-monitor:show-kernel-spec": {
+          description: "Show the selected kernel's launch specification.",
+          isAvailable: (event) => Boolean(this.kernelForEvent(event)),
+          didDispatch: (event) => this.act(showKernelSpec, event),
         },
         "jupyter-monitor:interrupt": {
           description: "Interrupt the kernel selected in the monitor.",
-          didDispatch: () => this.act(interrupt),
+          isAvailable: (event) => this.canAct(event, "interrupt"),
+          didDispatch: (event) => this.act(interrupt, event),
         },
         "jupyter-monitor:restart": {
           description: "Restart the kernel selected in the monitor.",
-          didDispatch: () => this.act(restart),
+          isAvailable: (event) => this.canAct(event, "restart"),
+          didDispatch: (event) => this.act(restart, event),
+        },
+        "jupyter-monitor:rename-session": {
+          description: "Rename the selected remote session.",
+          isAvailable: (event) =>
+            this.canAct(event, "rename") &&
+            Boolean(this.kernelForEvent(event)?.capabilities?.rename),
+          didDispatch: (event) => this.act((kernel) => this.promptRename(kernel), event),
         },
         "jupyter-monitor:shutdown": {
           description: "Shut down the kernel selected in the monitor.",
-          didDispatch: () => this.act(shutdown),
+          isAvailable: (event) => this.canShutdownKernel(this.kernelForEvent(event)),
+          didDispatch: (event) => this.shutdownKernel(this.kernelForEvent(event)),
         },
+        "jupyter-monitor:shutdown-all": {
+          description: "Shut down every running kernel in the monitor.",
+          isAvailable: () =>
+            this.provider.getRunningKernels().some((kernel) => this.canShutdownKernel(kernel)),
+          didDispatch: () => this.shutdownAll(),
+        },
+      }),
+      addDomListener(this.element, "mousedown", (event) => {
+        if (event.button === 1 && event.target.closest?.(".monitor-row")) event.preventDefault();
+      }),
+      addDomListener(this.element, "mouseup", (event) => {
+        if (event.button !== 1 || !event.target.closest?.(".monitor-row")) return;
+        event.preventDefault();
+        this.shutdownKernel(this.kernelForEvent(event));
+      }),
+      addDomListener(this.element, "auxclick", (event) => {
+        if (event.button === 1 && event.target.closest?.(".monitor-row")) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
       }),
       // Leaving the panel ends the keyboard journey too: the cursor does not
       // lie in wait to reappear on the next visit.
@@ -112,21 +174,31 @@ class Monitor {
         if (!this.element.contains(event.relatedTarget)) {
           this.focusedKey = null;
           etch.update(this);
+          lumine.commands.invalidateAvailability();
         }
       }),
       this.provider.observeActiveKernel((kernel) => {
         if (this.destroyed) return;
         this.activeKernel = kernel;
         etch.update(this);
+        lumine.commands.invalidateAvailability();
       }),
       this.provider.onDidChangeKernels(() => this.watchKernels()),
+    );
+
+    const shutdownButton = this.element.querySelector(".monitor-shutdown-all");
+    this.disposables.add(
+      lumine.tooltips.add(shutdownButton, {
+        html: false,
+        title: () => shutdownButton.dataset.tooltip,
+      }),
     );
 
     this.watchKernels();
   }
 
   promptRename(kernel) {
-    if (!kernel.capabilities?.rename) return;
+    if (!this.liveKernel(kernel) || !kernel.capabilities?.rename) return;
     const InputView = require("./rename-view");
     const generation = kernel.generation;
     const ownership = new CompositeDisposable();
@@ -140,7 +212,7 @@ class Monitor {
       { prompt: "Name your current session", defaultText: kernel.displayName, allowCancel: true },
       (name) => {
         close();
-        if (this.destroyed || kernel.isDestroyed?.() || generation !== kernel.generation) return;
+        if (!this.liveKernel(kernel) || generation !== kernel.generation) return;
         runKernelAction(kernel, "rename", name);
       },
       close,
@@ -165,7 +237,10 @@ class Monitor {
     for (const kernel of kernels) {
       if (!this.kernelSubscriptions.has(kernel) && kernel.onDidChangeStatus) {
         const update = () => {
-          if (!this.destroyed) etch.update(this);
+          if (!this.destroyed) {
+            etch.update(this);
+            lumine.commands.invalidateAvailability();
+          }
         };
         const subscriptions = new CompositeDisposable(kernel.onDidChangeStatus(update));
         if (kernel.onDidChangeConnectionState)
@@ -174,10 +249,54 @@ class Monitor {
       }
     }
     etch.update(this);
+    lumine.commands.invalidateAvailability();
   }
 
   kernels() {
-    return this.provider.getRunningKernels();
+    const kernels = [...this.provider.getRunningKernels()];
+    if (!this.sortColumn) return kernels;
+    const direction = this.sortDirection === "ascending" ? 1 : -1;
+    return kernels
+      .map((kernel, index) => ({ kernel, index, value: this.sortValue(kernel) }))
+      .sort((left, right) => {
+        if (left.value === null || right.value === null) {
+          if (left.value !== right.value) return left.value === null ? 1 : -1;
+        } else {
+          const difference =
+            typeof left.value === "number"
+              ? left.value - right.value
+              : kernelNames.compare(left.value, right.value);
+          if (difference) return difference * direction;
+        }
+        return left.index - right.index;
+      })
+      .map(({ kernel }) => kernel);
+  }
+
+  sortValue(kernel) {
+    switch (this.sortColumn) {
+      case "gateway":
+        return kernel.gatewayName || "Local";
+      case "kernel":
+        return kernel.displayName || "Unknown";
+      case "status":
+        return getKernelStatus(kernel);
+      case "count":
+        return Number.isFinite(kernel.executionCount) ? kernel.executionCount : 0;
+      case "time":
+        return executionDuration(kernel.lastExecutionTime);
+      case "files":
+        return this.provider.getFilesForKernel(kernel).map(tildify).join(" | ") || null;
+      default:
+        return null;
+    }
+  }
+
+  sortBy(column) {
+    this.sortDirection =
+      this.sortColumn === column && this.sortDirection === "ascending" ? "descending" : "ascending";
+    this.sortColumn = column;
+    etch.update(this);
   }
 
   // The kernel of the file active in the workspace centre — as observed off
@@ -204,6 +323,61 @@ class Monitor {
     return this.focusedKernel(kernels) || this.currentKernel(kernels);
   }
 
+  liveKernel(kernel) {
+    if (this.destroyed || !kernel || kernel.isDestroyed?.()) return null;
+    return this.provider.getRunningKernels().includes(kernel) ? kernel : null;
+  }
+
+  // A context command belongs to the clicked row, even when another kernel
+  // owns the keyboard cursor. Removed rows must never fall back to that cursor.
+  kernelForEvent(event) {
+    if (this.destroyed) return null;
+    const row = event?.target?.closest?.(".monitor-row");
+    if (row) {
+      return this.element.contains(row) ? this.liveKernel(this.rowKernels.get(row)) : null;
+    }
+    return this.liveKernel(this.targetKernel());
+  }
+
+  canAct(event, action) {
+    return typeof this.kernelForEvent(event)?.[action] === "function";
+  }
+
+  canShutdownKernel(kernel) {
+    return Boolean(
+      this.liveKernel(kernel) &&
+      typeof kernel.shutdown === "function" &&
+      !this.pendingShutdowns.has(kernel),
+    );
+  }
+
+  shutdownKernel(kernel) {
+    if (this.pendingShutdowns.has(kernel)) return this.pendingShutdowns.get(kernel);
+    if (!this.canShutdownKernel(kernel)) return Promise.resolve();
+    // Mark the operation before calling into the provider: a synchronous
+    // removal or another gesture must not submit the same shutdown twice.
+    this.pendingShutdowns.set(kernel, null);
+    const result = shutdown(kernel);
+    const completion = Promise.resolve(result).finally(() => {
+      this.pendingShutdowns.delete(kernel);
+      if (!this.destroyed) {
+        etch.update(this);
+        lumine.commands.invalidateAvailability();
+      }
+    });
+    this.pendingShutdowns.set(kernel, completion);
+    if (!this.destroyed) {
+      etch.update(this);
+      lumine.commands.invalidateAvailability();
+    }
+    return completion;
+  }
+
+  shutdownAll() {
+    const kernels = [...new Set(this.provider.getRunningKernels())];
+    return Promise.all(kernels.map((kernel) => this.shutdownKernel(kernel)));
+  }
+
   move(delta) {
     const kernels = this.kernels();
     if (!kernels.length) {
@@ -222,6 +396,7 @@ class Monitor {
     }
     this.focusedKey = getKernelKey(kernels[index]);
     etch.update(this);
+    lumine.commands.invalidateAvailability();
   }
 
   // Enter is the end of a keyboard journey: it needs a cursor, opens that
@@ -233,6 +408,7 @@ class Monitor {
     }
     this.focusedKey = null;
     etch.update(this);
+    lumine.commands.invalidateAvailability();
     this.openFilesFor(kernel);
   }
 
@@ -240,22 +416,23 @@ class Monitor {
   cancelFocus() {
     this.focusedKey = null;
     etch.update(this);
+    lumine.commands.invalidateAvailability();
     lumine.workspace.getActiveTextEditor()?.element?.focus();
   }
 
-  act(fn) {
-    const kernel = this.targetKernel();
+  act(fn, event) {
+    const kernel = this.kernelForEvent(event);
     if (kernel) {
       return fn(kernel);
     }
   }
 
-  openFiles() {
-    this.openFilesFor(this.targetKernel());
+  openFiles(event) {
+    this.openFilesFor(this.kernelForEvent(event));
   }
 
   openFilesFor(kernel) {
-    if (!kernel) {
+    if (!this.liveKernel(kernel)) {
       return;
     }
     for (const filePath of this.provider.getFilesForKernel(kernel)) {
@@ -267,12 +444,11 @@ class Monitor {
     }
   }
 
-  // The row itself is a hyperlink to the kernel's files, the way a linter row
-  // jumps to its message. Anything that is a link of its own — the file
-  // links, the action icons, the kernel-spec name — keeps its own click.
+  // The row opens the kernel's files. Its plain kernel-name cell is passive,
+  // while individual file links keep their own navigation.
   // The keyboard cursor stays where it is: only keyboard navigation places it.
   handleRowClick(event, kernel) {
-    if (event.target.closest("a")) {
+    if (event.button !== 0 || event.target.closest("a, button, .monitor-kernel")) {
       return;
     }
     this.openFilesFor(kernel);
@@ -287,9 +463,7 @@ class Monitor {
       return (
         <span key={filePath}>
           {index === 0 ? "" : "  |  "}
-          <a onClick={openFile} title="Jump to file">
-            {isUnsavedFilePath(filePath) ? filePath : tildify(filePath)}
-          </a>
+          <a onClick={openFile}>{isUnsavedFilePath(filePath) ? filePath : tildify(filePath)}</a>
         </span>
       );
     });
@@ -297,9 +471,9 @@ class Monitor {
 
   renderRow(kernel, currentKey, focusedKey) {
     const key = getKernelKey(kernel);
-    const canRename = Boolean(kernel.capabilities?.rename);
+    const kernelName = kernel.displayName || "Unknown";
     const files = this.provider.getFilesForKernel(kernel);
-    const classes = ["monitor-row"];
+    const classes = ["monitor-row", "data-table-row"];
     if (key === currentKey) {
       classes.push("current");
     }
@@ -309,41 +483,56 @@ class Monitor {
 
     return (
       <tr
-        key={key}
+        key={kernel}
+        ref={(row) => {
+          if (row) this.rowKernels.set(row, kernel);
+        }}
         className={classes.join(" ")}
         onClick={(event) => this.handleRowClick(event, kernel)}
       >
         <td className="monitor-gateway">{kernel.gatewayName || "Local"}</td>
-        <td className="monitor-kernel">
-          <a onClick={() => showKernelSpec(kernel)} title="Show kernel spec">
-            {kernel.displayName || "Unknown"}
-          </a>
-        </td>
-        <td className="monitor-status">
-          {kernel.connectionState && kernel.connectionState !== "ready"
-            ? kernel.connectionState
-            : kernel.executionState || "unknown"}
-        </td>
+        <td className="monitor-kernel">{kernelName}</td>
+        <td className="monitor-status">{getKernelStatus(kernel)}</td>
         <td className="monitor-count">{String(kernel.executionCount ?? 0)}</td>
         <td className="monitor-time">{kernel.lastExecutionTime || "N/A"}</td>
-        <td className="monitor-managements">
-          <a className="icon icon-zap" onClick={() => interrupt(kernel)} title="Interrupt kernel" />
-          <a className="icon icon-sync" onClick={() => restart(kernel)} title="Restart kernel" />
-          {canRename ? (
-            <a
-              className="icon icon-pencil"
-              onClick={() => this.promptRename(kernel)}
-              title="Rename session"
-            />
-          ) : null}
-          <a
-            className="icon icon-trashcan"
-            onClick={() => shutdown(kernel)}
-            title="Shutdown kernel"
-          />
-        </td>
         <td className="monitor-files">{this.renderFileLinks(files)}</td>
       </tr>
+    );
+  }
+
+  renderHeader(column, label) {
+    const sort = (
+      <button
+        type="button"
+        className="data-table-sort native-key-bindings"
+        onClick={() => this.sortBy(column)}
+      >
+        <span className="data-table-sort-label">{label}</span>
+      </button>
+    );
+    return (
+      <th
+        scope="col"
+        attributes={{ "aria-sort": this.sortColumn === column ? this.sortDirection : "none" }}
+      >
+        {column === "files" ? (
+          <div className="data-table-header-controls">
+            {sort}
+            <button
+              type="button"
+              className="monitor-shutdown-all data-table-header-action native-key-bindings icon icon-x"
+              dataset={{ tooltip: "Shutdown all" }}
+              attributes={{ "aria-label": "Shutdown all" }}
+              disabled={
+                !this.provider.getRunningKernels().some((kernel) => this.canShutdownKernel(kernel))
+              }
+              onClick={() => this.shutdownAll()}
+            />
+          </div>
+        ) : (
+          sort
+        )}
+      </th>
     );
   }
 
@@ -353,23 +542,37 @@ class Monitor {
     const currentKey = current ? getKernelKey(current) : null;
 
     return (
-      <div className="monitor-wrapper" tabIndex={-1} attributes={{ "data-scrollbar": "auto" }}>
-        <table className="monitor-table">
+      <div
+        className={`monitor-wrapper data-table-container${kernels.length ? "" : " is-empty"}`}
+        tabIndex={-1}
+        attributes={{ "data-scrollbar": "auto" }}
+      >
+        <table className="monitor-table data-table">
           <thead>
             <tr className="monitor-header">
-              <th>Gateway</th>
-              <th>Kernel</th>
-              <th>Status</th>
-              <th>Count</th>
-              <th>Last Exec Time</th>
-              <th>Managements</th>
-              <th>Files</th>
+              {this.renderHeader("gateway", "Gateway")}
+              {this.renderHeader("kernel", "Kernel")}
+              {this.renderHeader("status", "Status")}
+              {this.renderHeader("count", "Count")}
+              {this.renderHeader("time", "Last Exec Time")}
+              {this.renderHeader("files", "Files")}
             </tr>
           </thead>
           <tbody>
             {kernels.map((kernel) => this.renderRow(kernel, currentKey, this.focusedKey))}
           </tbody>
         </table>
+        {kernels.length ? null : (
+          <div className="panel-empty-state">
+            <background-tips>
+              <ul className="centered background-message">
+                <li>
+                  {this.providerAvailable ? "No running kernels" : "Kernel service unavailable"}
+                </li>
+              </ul>
+            </background-tips>
+          </div>
+        )}
       </div>
     );
   }
