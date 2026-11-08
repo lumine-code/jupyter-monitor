@@ -383,6 +383,7 @@ class Monitor {
     if (!kernels.length) {
       return;
     }
+    lumine.scrollbars.reveal(this.element);
     // The cursor moves relative to where it is — or, on the first press,
     // relative to the current row, so going down from the tinted kernel
     // reaches its neighbour rather than re-marking it. With neither, the
