@@ -114,6 +114,43 @@ describe("kernel monitor", () => {
     expect(component.element.querySelector(".monitor-managements")).toBeNull();
   });
 
+  it("signals accepted Enter and open-files once even when the monitor has not scrolled", () => {
+    const kernel = fakeKernel("Python");
+    component = new Monitor({ provider: fakeProvider([kernel]) });
+    flush(component);
+    jasmine.attachToDOM(component.element);
+    component.move(1);
+    flush(component);
+    const open = spyOn(component, "openFilesFor");
+    const reveal = spyOn(lumine.scrollbars, "reveal");
+    const before = component.element.scrollTop;
+    lumine.commands.dispatch(component.element, "core:confirm");
+    expect(open).toHaveBeenCalledOnceWith(kernel);
+    expect(reveal).toHaveBeenCalledOnceWith(component.element);
+    expect(component.element.scrollTop).toBe(before);
+    reveal.calls.reset();
+    lumine.commands.dispatch(component.element, "core:confirm");
+    expect(reveal).not.toHaveBeenCalled();
+    lumine.commands.dispatch(component.element, "jupyter-monitor:open-files");
+    expect(reveal).toHaveBeenCalledOnceWith(component.element);
+  });
+
+  it("keeps native button confirmation and kernel data actions outside navigation activity", () => {
+    const kernel = fakeKernel("Python");
+    component = new Monitor({ provider: fakeProvider([kernel]) });
+    flush(component);
+    jasmine.attachToDOM(component.element);
+    component.move(1);
+    flush(component);
+    const reveal = spyOn(lumine.scrollbars, "reveal");
+    const open = spyOn(component, "openFilesFor");
+    lumine.commands.dispatch(headers()[1].querySelector("button"), "core:confirm");
+    lumine.commands.dispatch(component.element, "jupyter-monitor:interrupt");
+    expect(kernel.interrupted).toBeTrue();
+    expect(open).not.toHaveBeenCalled();
+    expect(reveal).not.toHaveBeenCalled();
+  });
+
   it("says nothing is running when nothing is", () => {
     component = new Monitor({ provider: fakeProvider([]) });
     flush(component);

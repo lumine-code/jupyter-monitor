@@ -111,14 +111,16 @@ class Monitor {
           if (event.target.closest?.("button")) return;
           this.confirmFocused();
         },
+        ...lumine.scrollbars.navigationCommands(() => this.element, {
+          "jupyter-monitor:open-files": {
+            description: "Open the file the selected kernel is serving.",
+            isAvailable: (event) => Boolean(this.kernelForEvent(event)),
+            didDispatch: (event) => this.openFiles(event),
+          },
+        }),
         "core:cancel": (event) => {
           event.stopPropagation();
           this.cancelFocus();
-        },
-        "jupyter-monitor:open-files": {
-          description: "Open the file the selected kernel is serving.",
-          isAvailable: (event) => Boolean(this.kernelForEvent(event)),
-          didDispatch: (event) => this.openFiles(event),
         },
         "jupyter-monitor:show-kernel-spec": {
           description: "Show the selected kernel's launch specification.",
@@ -407,6 +409,7 @@ class Monitor {
     if (!kernel) {
       return;
     }
+    lumine.scrollbars.reveal(this.element);
     this.focusedKey = null;
     etch.update(this);
     lumine.commands.invalidateAvailability();
