@@ -69,7 +69,9 @@ const openUnsavedEditor = (filePath) => {
 
 const openEditor = (filePath) => {
   lumine.workspace.open(filePath, { searchAllPanes: true }).catch((error) => {
-    lumine.notifications.addError("Jupyter kernel monitor", { description: error });
+    lumine.notifications.addError("Unable to open the kernel source", {
+      detail: `Path: ${filePath}\n\n${error.message || String(error)}`,
+    });
   });
 };
 
