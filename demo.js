@@ -5,7 +5,7 @@ module.exports = {
   viewport: { width: 1200, height: 760 },
   async before() {},
   async prepare(context) {
-    const { lumine, state, fixture, open, profile } = context;
+    const { lumine, state, fixture, profile } = context;
     state.jupyterData = require("path").join(profile, "jupyter");
     const kernel = require("path").join(state.jupyterData, "kernels", "lumine-demo");
     require("fs").mkdirSync(kernel, { recursive: true });
@@ -23,7 +23,8 @@ module.exports = {
         language: "python",
       }),
     );
-    state.editor = await open("jupyter/signal.py");
+    state.editor = await lumine.workspace.open();
+    state.editor.setText(require("fs").readFileSync(fixture("jupyter/signal.py"), "utf8"));
     await lumine.project.setPaths([fixture("jupyter")]);
     process.env.JUPYTER_PATH = state.jupyterData;
     lumine.grammars.assignLanguageMode(state.editor.getBuffer(), "source.python");

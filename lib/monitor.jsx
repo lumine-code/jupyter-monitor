@@ -526,7 +526,7 @@ class Monitor {
             {sort}
             <button
               type="button"
-              className="monitor-shutdown-all data-table-header-action native-key-bindings icon-button icon-button-no-scale icon icon-x"
+              className="monitor-shutdown-all data-table-header-action native-key-bindings icon icon-x"
               dataset={{ tooltip: "Shutdown all" }}
               attributes={{ "aria-label": "Shutdown all" }}
               disabled={
